@@ -1,10 +1,10 @@
-// Inicia os ícones
+// Inicia os ícones da biblioteca Lucide
 lucide.createIcons();
 
-// Banco de dados local
+// Banco de dados local (localStorage)
 let accesses = JSON.parse(localStorage.getItem('sinir_by_allan_data')) || [];
 
-// Elementos
+// Referências dos elementos da interface
 const accessForm = document.getElementById('accessForm');
 const searchBar = document.getElementById('searchBar');
 const accessGrid = document.getElementById('accessGrid');
@@ -13,7 +13,7 @@ const totalCountLabel = document.getElementById('totalCount');
 const toast = document.getElementById('toast');
 
 /**
- * Funções de Modal
+ * Funções de controle dos Modais
  */
 function toggleModal() {
     document.getElementById('accessModal').classList.toggle('hidden');
@@ -27,7 +27,7 @@ function toggleImportModal() {
 }
 
 /**
- * Notificações e Cópia
+ * Sistema de Notificação e Cópia
  */
 function showToast(msg) {
     toast.textContent = msg || 'COPIADO!';
@@ -36,7 +36,7 @@ function showToast(msg) {
 }
 
 function copy(text) {
-    if (!text) return;
+    if (!text || text === '---') return;
     const el = document.createElement('textarea');
     el.value = text;
     document.body.appendChild(el);
@@ -47,25 +47,24 @@ function copy(text) {
 }
 
 /**
- * CRUD e Persistência
+ * Gerenciamento de Dados (Persistência)
  */
 function saveData() {
     localStorage.setItem('sinir_by_allan_data', JSON.stringify(accesses));
 }
 
 function deleteItem(id, event) {
-    // Impede que o clique no botão de excluir abra o modal de detalhes
     if (event) event.stopPropagation();
     
     if (confirm('Deseja remover este registro permanentemente?')) {
         accesses = accesses.filter(a => a.id !== id);
         saveData();
         render();
-        // Se o modal de detalhes estiver aberto, fecha ele
         closeDetails();
     }
 }
 
+// Cadastro manual via formulário
 accessForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const entry = {
@@ -87,7 +86,7 @@ accessForm.addEventListener('submit', (e) => {
 });
 
 /**
- * Importação e Exportação
+ * Exportação e Importação de Arquivos
  */
 function exportBackup() {
     if (accesses.length === 0) return alert('Sem dados para exportar.');
@@ -118,11 +117,14 @@ function importJSON(e) {
     reader.readAsText(file);
 }
 
+/**
+ * Processamento da Prancheta (Importação em Massa)
+ */
 function processBulkImport() {
     const text = document.getElementById('bulkImportArea').value;
     if (!text.trim()) return;
 
-    // Split por palavras chave comuns de início de bloco
+    // Divide o texto em blocos baseados no início de cada registro
     const blocks = text.split(/(?=cnpj\/cpf:)|(?=empresa:)/i).filter(b => b.trim() !== "");
     
     let added = 0;
@@ -130,7 +132,9 @@ function processBulkImport() {
         const lines = block.split('\n').map(l => l.trim()).filter(l => l !== "");
         
         const find = (label) => {
-            const match = block.match(new RegExp(`${label}\\s*[:\\-]?\\s*(.*)`, 'i'));
+            // Regex melhorada para aceitar espaços e variações de separadores
+            const regex = new RegExp(`${label}\\s*[:\\-]?\\s*(.*)`, 'i');
+            const match = block.match(regex);
             return match ? match[1].trim() : "";
         };
 
@@ -168,13 +172,12 @@ function processBulkImport() {
 }
 
 /**
- * Função para visualizar detalhes do card
+ * Visualização Detalhada do Card
  */
 function showDetails(id) {
     const item = accesses.find(a => a.id === id);
     if (!item) return;
 
-    // Cria o elemento do modal se não existir
     let detailsModal = document.getElementById('detailsModal');
     if (!detailsModal) {
         detailsModal = document.createElement('div');
@@ -186,28 +189,28 @@ function showDetails(id) {
     detailsModal.innerHTML = `
         <div class="modal-content max-w-xl">
             <div class="modal-header">
-                <h2 class="text-xl font-black text-indigo-800 uppercase truncate pr-4">${item.empresa}</h2>
-                <button onclick="closeDetails()" class="text-slate-400 hover:text-red-500"><i data-lucide="x"></i></button>
+                <h2 class="text-xl font-black text-indigo-800 uppercase truncate pr-4">${item.empresa || 'DETALHES'}</h2>
+                <button onclick="closeDetails()" class="text-slate-400 hover:text-red-500 transition-colors"><i data-lucide="x"></i></button>
             </div>
-            <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto custom-scrollbar">
+            <div class="p-6 space-y-3 max-h-[70vh] overflow-y-auto custom-scrollbar">
                 
-                ${renderDetailField('CNPJ/CPF', item.cnpj_cpf)}
-                ${renderDetailField('Código Unidade', item.unidade)}
-                ${renderDetailField('Empresa', item.empresa)}
-                ${renderDetailField('Usuário', item.usuario)}
-                ${renderDetailField('CPF de Acesso', item.cpf_acesso)}
-                ${renderDetailField('Senha', item.senha, true)}
+                ${renderDetailField('CNPJ / CPF:', item.cnpj_cpf)}
+                ${renderDetailField('CÓDIGO UNIDADE:', item.unidade)}
+                ${renderDetailField('EMPRESA:', item.empresa)}
+                ${renderDetailField('USUÁRIO:', item.usuario)}
+                ${renderDetailField('CPF (ACESSO):', item.cpf_acesso)}
+                ${renderDetailField('SENHA:', item.senha, true)}
                 
                 ${item.obs ? `
-                    <div class="bg-amber-50 p-4 rounded-2xl border border-amber-100">
+                    <div class="bg-amber-50 p-4 rounded-2xl border border-amber-100 mt-4">
                         <span class="text-[10px] font-black text-amber-600 uppercase tracking-widest">Observações</span>
-                        <p class="text-sm font-black text-slate-800 mt-1">${item.obs}</p>
+                        <p class="text-sm font-black text-slate-800 mt-1 leading-tight">${item.obs}</p>
                     </div>
                 ` : ''}
             </div>
             <div class="p-4 bg-slate-50 border-t flex justify-between items-center text-[10px] font-bold text-slate-400">
-                <span>CADASTRADO EM: ${item.date}</span>
-                <button onclick="deleteItem(${item.id})" class="text-red-500 hover:underline">EXCLUIR REGISTRO</button>
+                <span>REF: ${item.date}</span>
+                <button onclick="deleteItem(${item.id})" class="text-red-400 hover:text-red-600 uppercase tracking-tighter">Excluir este registro</button>
             </div>
         </div>
     `;
@@ -216,15 +219,18 @@ function showDetails(id) {
     lucide.createIcons();
 }
 
+/**
+ * Renderiza cada linha de campo com botão de cópia
+ */
 function renderDetailField(label, value, isPassword = false) {
-    if (!value) return '';
+    const displayValue = value && value.trim() !== "" ? value : "---";
     return `
-        <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100 flex justify-between items-center group">
+        <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100 flex justify-between items-center hover:bg-white hover:border-indigo-200 transition-all group">
             <div class="truncate mr-2">
                 <span class="text-[9px] font-black text-slate-400 uppercase tracking-tighter block">${label}</span>
-                <span class="text-sm font-bold text-slate-700 ${isPassword ? 'font-mono tracking-widest' : ''}">${value}</span>
+                <span class="text-sm font-bold text-slate-700 ${isPassword ? 'font-mono tracking-widest' : ''}">${displayValue}</span>
             </div>
-            <button onclick="copy('${value}')" class="bg-white p-2 rounded-xl shadow-sm text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all">
+            <button onclick="copy('${displayValue}')" class="bg-white p-2 rounded-xl shadow-sm text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all active:scale-90" title="Copiar">
                 <i data-lucide="copy" class="w-4 h-4"></i>
             </button>
         </div>
@@ -237,12 +243,12 @@ function closeDetails() {
 }
 
 /**
- * Renderização dos Cards (Organizados em Ordem Alfabética)
+ * Renderização da Grade de Cards (Ordem Alfabética)
  */
 function render() {
     const query = searchBar.value.toLowerCase();
     
-    // Filtra e organiza em ordem alfabética pela Empresa
+    // Filtra pela busca e ordena de A-Z pela Empresa
     const filtered = accesses
         .filter(a => 
             (a.empresa || "").toLowerCase().includes(query) ||
@@ -270,19 +276,19 @@ function render() {
                         <div class="bg-indigo-50 text-indigo-700 w-12 h-12 rounded-2xl flex items-center justify-center font-black text-2xl uppercase group-hover:bg-indigo-600 group-hover:text-white transition-colors">
                             ${(a.empresa || "?").charAt(0)}
                         </div>
-                        <button onclick="deleteItem(${a.id}, event)" class="text-slate-200 hover:text-red-500 transition-all p-1">
-                            <i data-lucide="trash-2" class="w-5 h-5"></i>
-                        </button>
+                        <div class="text-slate-200 group-hover:text-indigo-200 transition-colors">
+                            <i data-lucide="external-link" class="w-5 h-5"></i>
+                        </div>
                     </div>
 
-                    <h3 class="font-black text-lg text-slate-800 mb-1 truncate uppercase">${a.empresa || 'S/ NOME'}</h3>
+                    <h3 class="font-black text-lg text-slate-800 mb-1 truncate uppercase group-hover:text-indigo-700 transition-colors">${a.empresa || 'S/ NOME'}</h3>
                     <div class="flex items-center text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                        <span>CNPJ: ${a.cnpj_cpf || '---'}</span>
+                        <i data-lucide="hash" class="w-3 h-3 mr-1"></i> ${a.cnpj_cpf || '---'}
                     </div>
                     
                     <div class="mt-4 pt-3 border-t border-slate-50 flex items-center justify-between">
-                         <span class="text-[9px] font-black text-indigo-500 uppercase">Clique para ver mais</span>
-                         <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300"></i>
+                         <span class="text-[9px] font-black text-indigo-500 uppercase tracking-tighter">Ver informações completas</span>
+                         <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300 group-hover:translate-x-1 transition-transform"></i>
                     </div>
                 </div>
             </div>
@@ -291,5 +297,5 @@ function render() {
     lucide.createIcons();
 }
 
-// Inicia
+// Inicialização
 window.onload = render;
