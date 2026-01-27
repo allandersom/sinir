@@ -4,54 +4,67 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ACESSO DO SINIR BY ALLAN</title>
-    <!-- Tailwind CSS para o Layout -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
-    <!-- Biblioteca de Ícones Lucide -->
+    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body class="bg-slate-50 min-h-screen text-slate-900 font-sans">
+<body class="bg-slate-50 min-h-screen text-slate-900 font-sans selection:bg-indigo-100 selection:text-indigo-900">
 
-    <div class="max-w-6xl mx-auto p-4 md:p-8">
-        <!-- Header Principal -->
-        <header class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 border-b pb-6 border-slate-200">
-            <div>
-                <h1 class="text-3xl font-black text-indigo-900 tracking-tighter flex items-center gap-3">
-                    <i data-lucide="shield-check" class="w-10 h-10 text-indigo-600"></i> ACESSO DO SINIR BY ALLAN
+    <div class="max-w-7xl mx-auto p-4 md:p-10">
+        <!-- Header com Gradiente e Efeito Glass -->
+        <header class="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-12 bg-white/70 backdrop-blur-md p-8 rounded-[2.5rem] border border-white shadow-xl shadow-slate-200/50 relative overflow-hidden">
+            <div class="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-indigo-500/5 rounded-full blur-3xl"></div>
+            <div class="z-10">
+                <h1 class="text-4xl font-[900] text-slate-900 tracking-tight flex items-center gap-3">
+                    <span class="bg-indigo-600 text-white p-2 rounded-2xl shadow-lg shadow-indigo-200">
+                        <i data-lucide="shield-check" class="w-8 h-8"></i>
+                    </span>
+                    ACESSO DO SINIR <span class="text-indigo-600">BY ALLAN</span>
                 </h1>
-                <p class="text-slate-500 font-bold uppercase text-[10px] tracking-[0.2em] mt-1">Gestão Técnica de Credenciais</p>
+                <p class="text-slate-400 font-bold uppercase text-[10px] tracking-[0.3em] mt-3 flex items-center gap-2">
+                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                    Central de Credenciais Técnicas
+                </p>
             </div>
-            <div class="flex flex-wrap gap-2">
-                <button onclick="exportBackup()" class="btn-util">
-                    <i data-lucide="save"></i> BACKUP
+            <div class="flex flex-wrap gap-3 z-10">
+                <button onclick="exportBackup()" class="btn-secondary group">
+                    <i data-lucide="download-cloud" class="w-4 h-4 group-hover:bounce"></i> BACKUP
                 </button>
-                <button onclick="toggleImportModal()" class="btn-util">
-                    <i data-lucide="clipboard-list"></i> PRANCHETA
+                <button onclick="toggleImportModal()" class="btn-secondary group">
+                    <i data-lucide="file-up" class="w-4 h-4"></i> PRANCHETA
                 </button>
-                <button onclick="prepareNewEntry()" class="btn-primary">
-                    <i data-lucide="plus"></i> NOVO ACESSO
+                <button onclick="prepareNewEntry()" class="btn-primary group">
+                    <i data-lucide="plus-circle" class="w-5 h-5 group-hover:rotate-90 transition-transform"></i> NOVO ACESSO
                 </button>
             </div>
         </header>
 
-        <!-- Pesquisa -->
-        <div class="relative mb-8">
-            <i data-lucide="search" class="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 w-6 h-6"></i>
-            <input type="text" id="searchBar" oninput="render()" placeholder="Pesquisar por empresa, unidade ou documento..." class="search-input">
+        <!-- Pesquisa Futurista -->
+        <div class="relative mb-10 group">
+            <div class="absolute inset-0 bg-indigo-500/5 blur-2xl rounded-full opacity-0 group-focus-within:opacity-100 transition-opacity"></div>
+            <i data-lucide="search" class="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 w-6 h-6 group-focus-within:text-indigo-500 transition-colors"></i>
+            <input type="text" id="searchBar" oninput="render()" placeholder="O que você está procurando hoje?" class="search-input">
         </div>
 
-        <!-- Estatísticas -->
-        <div class="mb-6">
+        <!-- Estatísticas e Filtros -->
+        <div class="mb-8 flex items-center justify-between px-4">
             <span id="totalCount" class="badge">TOTAL: 0 REGISTROS</span>
+            <div class="flex items-center gap-2 text-slate-400 text-xs font-bold uppercase tracking-widest">
+                <i data-lucide="sort-asc" class="w-4 h-4"></i> Ordem Alfabética
+            </div>
         </div>
 
-        <!-- Grade de Cards -->
-        <div id="accessGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        <!-- Grid -->
+        <div id="accessGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-8"></div>
 
-        <!-- Estado Vazio -->
-        <div id="emptyState" class="hidden flex flex-col items-center justify-center py-32 text-slate-300">
-            <i data-lucide="database-zap" class="w-20 h-20 mb-4 opacity-10"></i>
-            <p class="text-xl font-black uppercase tracking-widest">Nenhum dado encontrado</p>
+        <!-- Empty State -->
+        <div id="emptyState" class="hidden flex flex-col items-center justify-center py-40 text-slate-300">
+            <div class="bg-slate-100 p-10 rounded-full mb-6">
+                <i data-lucide="box" class="w-20 h-20 opacity-20"></i>
+            </div>
+            <p class="text-2xl font-black uppercase tracking-[0.2em]">Vazio por enquanto</p>
         </div>
     </div>
 
@@ -59,81 +72,82 @@
     <div id="accessModal" class="modal-overlay hidden">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 id="modalTitle" class="text-xl font-black uppercase italic">Adicionar Cadastro</h2>
+                <div>
+                    <h2 id="modalTitle" class="text-2xl font-black uppercase italic text-slate-800">Novo Cadastro</h2>
+                    <p class="text-[10px] font-bold text-indigo-500 tracking-widest mt-1">PREENCHA TODOS OS CAMPOS</p>
+                </div>
                 <button onclick="toggleModal()" class="close-btn"><i data-lucide="x"></i></button>
             </div>
-            <form id="accessForm" class="p-8 space-y-4">
-                <div class="grid grid-cols-2 gap-4">
+            <form id="accessForm" class="p-10 space-y-5">
+                <div class="grid grid-cols-2 gap-5">
                     <div class="col-span-2">
-                        <label class="label">Empresa *</label>
-                        <input type="text" id="empresa" required class="input">
+                        <label class="label">Nome da Empresa *</label>
+                        <input type="text" id="empresa" required class="input" placeholder="Ex: Sinir Global">
                     </div>
                     <div>
-                        <label class="label">CNPJ/CPF (Empresa)</label>
+                        <label class="label">CNPJ ou CPF (Documento)</label>
                         <input type="text" id="cnpj_cpf" class="input" placeholder="00.000.000/0000-00">
                     </div>
                     <div>
-                        <label class="label">Código Unidade</label>
-                        <input type="text" id="unidade" class="input">
+                        <label class="label">Cód. da Unidade</label>
+                        <input type="text" id="unidade" class="input" placeholder="Ex: 4002">
                     </div>
                     <div>
-                        <label class="label">Usuário</label>
-                        <input type="text" id="usuario" class="input">
+                        <label class="label">Usuário de Acesso</label>
+                        <input type="text" id="usuario" class="input" placeholder="Ex: admin_root">
                     </div>
                     <div>
-                        <label class="label">CPF (Acesso)</label>
+                        <label class="label">CPF Individual</label>
                         <input type="text" id="cpf_acesso" class="input" placeholder="000.000.000-00">
                     </div>
                     <div class="col-span-2">
-                        <label class="label">Senha *</label>
-                        <input type="password" id="senha" required class="input">
+                        <label class="label">Senha (Sempre Visível) *</label>
+                        <input type="text" id="senha" required class="input bg-indigo-50/30 border-indigo-100 focus:border-indigo-500" placeholder="Digite a senha">
                     </div>
                     <div class="col-span-2">
-                        <label class="label">Observações</label>
-                        <textarea id="obs" class="input" rows="2" placeholder="Informações extras em negrito..."></textarea>
+                        <label class="label">Informações Adicionais (Obs)</label>
+                        <textarea id="obs" class="input min-h-[100px]" placeholder="Observações que aparecerão em negrito..."></textarea>
                     </div>
                 </div>
                 <div class="flex gap-4 pt-6">
-                    <button type="button" onclick="toggleModal()" class="btn-secondary w-full">CANCELAR</button>
-                    <button type="submit" class="btn-primary w-full justify-center">
-                        <span id="saveBtnText">SALVAR REGISTRO</span>
+                    <button type="button" onclick="toggleModal()" class="btn-cancel w-full">DESCARTAR</button>
+                    <button type="submit" class="btn-save w-full">
+                        <span id="saveBtnText">SALVAR DADOS</span>
                     </button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Modal Prancheta Inteligente -->
+    <!-- Modal Importação -->
     <div id="importModal" class="modal-overlay hidden">
-        <div class="modal-content max-w-2xl">
-            <div class="modal-header">
-                <div class="flex items-center gap-3">
-                    <i data-lucide="zap" class="text-yellow-500 fill-yellow-500"></i>
-                    <h2 class="text-xl font-black uppercase">Prancheta de Importação</h2>
-                </div>
-                <button onclick="toggleImportModal()" class="close-btn"><i data-lucide="x"></i></button>
+        <div class="modal-content max-w-2xl bg-slate-900 border-indigo-500/30">
+            <div class="modal-header bg-slate-800/50 border-slate-700">
+                <h2 class="text-xl font-black uppercase text-white tracking-widest flex items-center gap-3">
+                    <i data-lucide="terminal" class="text-indigo-400"></i> Prancheta de Massa
+                </h2>
+                <button onclick="toggleImportModal()" class="text-slate-500 hover:text-white"><i data-lucide="x"></i></button>
             </div>
-            <div class="p-8 space-y-6">
-                <div class="flex gap-2">
-                    <button onclick="document.getElementById('jsonFileInput').click()" class="text-[10px] font-black text-indigo-600 border-b-2 border-indigo-600 py-1 hover:text-indigo-800 transition-all uppercase">Restaurar via Arquivo JSON</button>
-                    <input type="file" id="jsonFileInput" accept=".json" class="hidden" onchange="importJSON(event)">
+            <div class="p-10 space-y-8">
+                <button onclick="document.getElementById('jsonFileInput').click()" class="w-full py-4 border-2 border-dashed border-slate-700 rounded-2xl text-slate-400 font-bold hover:border-indigo-500 hover:text-indigo-400 transition-all">
+                    Selecionar arquivo .JSON para restaurar
+                </button>
+                <input type="file" id="jsonFileInput" accept=".json" class="hidden" onchange="importJSON(event)">
+                
+                <div class="space-y-3">
+                    <label class="text-xs font-black text-indigo-400 uppercase tracking-widest">Colar Blocos de Texto</label>
+                    <textarea id="bulkImportArea" rows="12" class="w-full p-6 bg-slate-800 text-indigo-100 rounded-[2rem] text-xs font-mono border-2 border-slate-700 focus:border-indigo-500 outline-none transition-all shadow-inner" placeholder="cnpj/cpf: ...&#10;codigo unidade: ...&#10;empresa: ...&#10;..."></textarea>
                 </div>
-                <div>
-                    <p class="text-[11px] text-slate-500 font-bold mb-3 leading-relaxed">
-                        COLE ABAIXO QUANTOS ACESSOS QUISER. <br>
-                        O sistema identifica CNPJ, CPF e OBSERVAÇÕES automaticamente por bloco.
-                    </p>
-                    <textarea id="bulkImportArea" rows="12" class="w-full p-5 bg-slate-900 text-indigo-300 rounded-[2rem] text-xs font-mono border-4 border-slate-800 focus:border-indigo-500 outline-none transition-all shadow-inner" placeholder="cnpj/cpf: ...&#10;codigo unidade: ...&#10;empresa: ...&#10;usuario: ...&#10;cpf: ...&#10;senha: ...&#10;OBSERVAÇÃO AQUI EM BAIXO"></textarea>
-                    <button onclick="processBulkImport()" class="w-full mt-6 py-5 bg-indigo-600 text-white rounded-[1.5rem] font-black uppercase tracking-widest hover:bg-indigo-700 shadow-xl shadow-indigo-200 transition-all active:scale-95 flex items-center justify-center gap-3">
-                        <i data-lucide="list-plus"></i> Processar e Adicionar à Lista
-                    </button>
-                </div>
+                
+                <button onclick="processBulkImport()" class="btn-import">
+                    PROCESSAR E ADICIONAR AGORA
+                </button>
             </div>
         </div>
     </div>
 
     <!-- Toast -->
-    <div id="toast" class="toast hidden">COPIADO!</div>
+    <div id="toast" class="toast hidden">CONCLUÍDO!</div>
 
     <script src="script.js"></script>
 </body>
