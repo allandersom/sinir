@@ -1,95 +1,69 @@
-/**
- * Gerenciador de Acessos - Lógica principal
- */
-
-// Inicializar ícones da biblioteca Lucide
+// Inicia os ícones
 lucide.createIcons();
 
-// Estado Global - Busca do localStorage ou inicia vazio
-let accesses = JSON.parse(localStorage.getItem('myAccessVault')) || [];
+// Banco de dados local
+let accesses = JSON.parse(localStorage.getItem('sinir_by_allan_data')) || [];
 
-// Referências de Elementos do DOM
+// Elementos
 const accessForm = document.getElementById('accessForm');
 const searchBar = document.getElementById('searchBar');
 const accessGrid = document.getElementById('accessGrid');
-const totalCountLabel = document.getElementById('totalCount');
 const emptyState = document.getElementById('emptyState');
-const modal = document.getElementById('accessModal');
-const importModal = document.getElementById('importModal');
+const totalCountLabel = document.getElementById('totalCount');
 const toast = document.getElementById('toast');
 
 /**
- * Alterna a visibilidade do modal de cadastro individual
+ * Funções de Modal
  */
 function toggleModal() {
-    modal.classList.toggle('hidden');
-    if (!modal.classList.contains('hidden')) {
+    document.getElementById('accessModal').classList.toggle('hidden');
+    if (!document.getElementById('accessModal').classList.contains('hidden')) {
         document.getElementById('empresa').focus();
     }
 }
 
-/**
- * Alterna a visibilidade do modal de importação
- */
 function toggleImportModal() {
-    importModal.classList.toggle('hidden');
+    document.getElementById('importModal').classList.toggle('hidden');
 }
 
 /**
- * Exibe uma notificação temporária
+ * Notificações e Cópia
  */
-function showToast(message) {
-    toast.textContent = message || 'Copiado!';
+function showToast(msg) {
+    toast.textContent = msg || 'COPIADO!';
     toast.classList.remove('hidden');
     setTimeout(() => toast.classList.add('hidden'), 2000);
 }
 
-/**
- * Copia texto para a área de transferência
- */
-function copyToClipboard(text) {
+function copy(text) {
     if (!text) return;
-    
-    const textarea = document.createElement('textarea');
-    textarea.value = text;
-    document.body.appendChild(textarea);
-    textarea.select();
-    
-    try {
-        document.execCommand('copy');
-        showToast('Copiado com sucesso!');
-    } catch (err) {
-        console.error('Erro ao copiar', err);
-    }
-    
-    document.body.removeChild(textarea);
+    const el = document.createElement('textarea');
+    el.value = text;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    showToast();
 }
 
 /**
- * Salva os dados no LocalStorage
+ * CRUD e Persistência
  */
 function saveData() {
-    localStorage.setItem('myAccessVault', JSON.stringify(accesses));
+    localStorage.setItem('sinir_by_allan_data', JSON.stringify(accesses));
 }
 
-/**
- * Remove um item de acesso pelo ID
- */
-function deleteAccess(id) {
-    if (confirm('Deseja excluir este acesso permanentemente?')) {
-        accesses = accesses.filter(item => item.id !== id);
+function deleteItem(id) {
+    if (confirm('Deseja remover este registro permanentemente?')) {
+        accesses = accesses.filter(a => a.id !== id);
         saveData();
         render();
     }
 }
 
-/**
- * Processa o envio do formulário individual
- */
 accessForm.addEventListener('submit', (e) => {
     e.preventDefault();
-
-    const newEntry = {
+    const entry = {
         id: Date.now(),
         empresa: document.getElementById('empresa').value,
         cnpj_cpf: document.getElementById('cnpj_cpf').value,
@@ -97,203 +71,190 @@ accessForm.addEventListener('submit', (e) => {
         usuario: document.getElementById('usuario').value,
         cpf_acesso: document.getElementById('cpf_acesso').value,
         senha: document.getElementById('senha').value,
-        createdAt: new Date().toLocaleDateString()
+        obs: document.getElementById('obs').value,
+        date: new Date().toLocaleDateString()
     };
-
-    accesses.push(newEntry);
+    accesses.push(entry);
     saveData();
     render();
-    
     accessForm.reset();
     toggleModal();
 });
 
 /**
- * Backup: Exporta os dados para um arquivo JSON
+ * Importação e Exportação
  */
 function exportBackup() {
-    if (accesses.length === 0) {
-        alert('Não há dados para exportar.');
-        return;
-    }
-    
-    const dataStr = JSON.stringify(accesses, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-    
-    const exportFileDefaultName = `backup-accessvault-${new Date().toISOString().slice(0,10)}.json`;
-    
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
+    if (accesses.length === 0) return alert('Sem dados para exportar.');
+    const blob = new Blob([JSON.stringify(accesses, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `BACKUP-SINIR-ALLAN-${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
 }
 
-/**
- * Restauração: Importa dados de um arquivo JSON
- */
-function importJSON(event) {
-    const file = event.target.files[0];
+function importJSON(e) {
+    const file = e.target.files[0];
     if (!file) return;
-
     const reader = new FileReader();
-    reader.onload = function(e) {
+    reader.onload = (event) => {
         try {
-            const importedData = JSON.parse(e.target.result);
-            if (Array.isArray(importedData)) {
-                if (confirm(`Deseja importar ${importedData.length} registros? Isso manterá os atuais e adicionará os novos.`)) {
-                    accesses = [...accesses, ...importedData];
-                    saveData();
-                    render();
-                    toggleImportModal();
-                    showToast('Importação concluída!');
-                }
-            } else {
-                alert('Arquivo inválido.');
+            const data = JSON.parse(event.target.result);
+            if (Array.isArray(data)) {
+                accesses = [...accesses, ...data];
+                saveData();
+                render();
+                toggleImportModal();
+                showToast('RESTAURADO!');
             }
-        } catch (err) {
-            alert('Erro ao ler o arquivo JSON.');
-        }
+        } catch (err) { alert('Erro no arquivo JSON.'); }
     };
     reader.readAsText(file);
 }
 
-/**
- * Importação em Massa: Processa texto da prancheta
- */
 function processBulkImport() {
     const text = document.getElementById('bulkImportArea').value;
     if (!text.trim()) return;
 
-    // Split por blocos (tenta identificar onde começa um novo registro)
-    // Se o usuário colar vários blocos que começam com "cnpj/cpf:", usamos isso como separador
-    const blocks = text.split(/cnpj\/cpf:/i).filter(b => b.trim() !== "");
+    // Split por palavras chave comuns de início de bloco
+    const blocks = text.split(/(?=cnpj\/cpf:)|(?=empresa:)/i).filter(b => b.trim() !== "");
     
-    let count = 0;
-    const newItems = blocks.map(block => {
-        // Função auxiliar para extrair valor baseado em rótulo
-        const extract = (label) => {
-            const regex = new RegExp(`${label}\\s*[:\\-]?\\s*(.*)`, 'i');
-            const match = block.match(regex);
-            return match ? match[1].trim().split('\n')[0] : "";
+    let added = 0;
+    blocks.forEach(block => {
+        const lines = block.split('\n').map(l => l.trim()).filter(l => l !== "");
+        
+        const find = (label) => {
+            const match = block.match(new RegExp(`${label}\\s*[:\\-]?\\s*(.*)`, 'i'));
+            return match ? match[1].trim() : "";
         };
 
-        const item = {
-            id: Date.now() + Math.random(),
-            cnpj_cpf: extract(''), // O primeiro valor do split é o conteúdo após cnpj/cpf:
-            unidade: extract('codigo unidade'),
-            empresa: extract('empresa'),
-            usuario: extract('usuario'),
-            cpf_acesso: extract('cpf'),
-            senha: extract('senha'),
-            createdAt: new Date().toLocaleDateString()
-        };
-
-        // Fallback: Se não encontrou rótulos, tenta pegar por ordem de linha se for um bloco simples
-        if (!item.empresa && !item.senha) {
-            const lines = block.split('\n').map(l => l.trim()).filter(l => l !== "");
-            if (lines.length >= 2) {
-                item.empresa = lines[2] || lines[0];
-                item.senha = lines[lines.length - 1];
-            }
+        const senhaIdx = lines.findIndex(l => l.toLowerCase().includes('senha:'));
+        let obsText = "";
+        if (senhaIdx !== -1 && lines.length > senhaIdx + 1) {
+            obsText = lines.slice(senhaIdx + 1).join(' ');
         }
 
-        if (item.empresa || item.senha) count++;
-        return item;
+        const entry = {
+            id: Date.now() + Math.random(),
+            cnpj_cpf: find('cnpj/cpf'),
+            unidade: find('codigo unidade'),
+            empresa: find('empresa'),
+            usuario: find('usuario'),
+            cpf_acesso: find('cpf'),
+            senha: find('senha'),
+            obs: obsText,
+            date: new Date().toLocaleDateString()
+        };
+
+        if (entry.empresa || entry.senha) {
+            accesses.push(entry);
+            added++;
+        }
     });
 
-    if (count > 0) {
-        accesses = [...accesses, ...newItems];
+    if (added > 0) {
         saveData();
         render();
         document.getElementById('bulkImportArea').value = "";
         toggleImportModal();
-        showToast(`${count} acessos importados!`);
-    } else {
-        alert('Não foi possível identificar dados válidos no texto.');
+        showToast(`${added} IMPORTADOS!`);
     }
 }
 
 /**
- * Escuta o campo de busca
- */
-searchBar.addEventListener('input', render);
-
-/**
- * Renderiza a lista de acessos na tela
+ * Renderização dos Cards
  */
 function render() {
-    const searchTerm = searchBar.value.toLowerCase();
-    
-    const filtered = accesses.filter(item => 
-        (item.empresa || "").toLowerCase().includes(searchTerm) || 
-        (item.usuario || "").toLowerCase().includes(searchTerm) || 
-        (item.cnpj_cpf || "").toLowerCase().includes(searchTerm)
+    const query = searchBar.value.toLowerCase();
+    const filtered = accesses.filter(a => 
+        (a.empresa || "").toLowerCase().includes(query) ||
+        (a.cnpj_cpf || "").toLowerCase().includes(query) ||
+        (a.usuario || "").toLowerCase().includes(query) ||
+        (a.unidade || "").toLowerCase().includes(query)
     );
 
     totalCountLabel.textContent = `Total: ${filtered.length}`;
-
+    
     if (filtered.length === 0) {
         accessGrid.innerHTML = '';
         emptyState.classList.remove('hidden');
     } else {
         emptyState.classList.add('hidden');
-        accessGrid.innerHTML = filtered.map(item => `
-            <div class="access-card group">
-                <div class="p-5">
+        accessGrid.innerHTML = filtered.map(a => `
+            <div class="access-card">
+                <div class="p-6 flex-1">
+                    <!-- Topo Card -->
                     <div class="flex justify-between items-start mb-4">
-                        <div class="bg-indigo-50 text-indigo-700 w-10 h-10 rounded-lg flex items-center justify-center font-bold text-xl uppercase">
-                            ${(item.empresa || "?").charAt(0)}
+                        <div class="bg-indigo-50 text-indigo-700 w-12 h-12 rounded-2xl flex items-center justify-center font-black text-2xl uppercase">
+                            ${(a.empresa || "?").charAt(0)}
                         </div>
-                        <button onclick="deleteAccess(${item.id})" class="text-slate-300 hover:text-red-500 transition-colors">
+                        <button onclick="deleteItem(${a.id})" class="text-slate-300 hover:text-red-500 transition-all p-1">
                             <i data-lucide="trash-2" class="w-5 h-5"></i>
                         </button>
                     </div>
+
+                    <h3 class="font-black text-xl text-slate-800 mb-1 truncate uppercase">${a.empresa || 'S/ NOME'}</h3>
                     
-                    <h3 class="font-bold text-lg text-slate-800 mb-1 truncate" title="${item.empresa}">${item.empresa || 'Sem Nome'}</h3>
-                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-4">
-                        CNPJ/CPF: ${item.cnpj_cpf || '---'}
-                    </p>
-                    
-                    <div class="space-y-3">
-                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                            <div class="flex justify-between items-center mb-1">
-                                <span class="text-[9px] font-bold text-slate-400 uppercase">Usuário / Acesso</span>
-                                <button onclick="copyToClipboard('${item.usuario || item.cpf_acesso}')" class="text-indigo-600 hover:text-indigo-800 text-xs flex items-center gap-1 font-bold">
-                                    <i data-lucide="copy" class="w-3 h-3"></i> COPIAR
-                                </button>
+                    <!-- Linha CNPJ -->
+                    <div class="flex items-center justify-between text-[10px] text-slate-400 font-black uppercase tracking-widest mb-4">
+                        <span>CNPJ: ${a.cnpj_cpf || '---'}</span>
+                        <button onclick="copy('${a.cnpj_cpf}')" class="copy-badge"><i data-lucide="copy" class="w-3 h-3"></i></button>
+                    </div>
+
+                    <div class="space-y-2">
+                        <!-- Usuário -->
+                        <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100 flex justify-between items-center group">
+                            <div class="truncate mr-2">
+                                <span class="text-[9px] font-black text-slate-400 uppercase tracking-tighter block">Usuário / CPF</span>
+                                <span class="text-sm font-bold text-slate-700">${a.usuario || '---'}</span>
                             </div>
-                            <div class="text-sm font-medium text-slate-700 truncate">
-                                ${item.usuario || '---'} ${item.cpf_acesso ? `<span class="text-slate-400 font-normal">| ${item.cpf_acesso}</span>` : ''}
-                            </div>
+                            <button onclick="copy('${a.usuario || a.cpf_acesso}')" class="copy-badge opacity-0 group-hover:opacity-100"><i data-lucide="copy" class="w-4 h-4"></i></button>
                         </div>
 
-                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                            <div class="flex justify-between items-center mb-1">
-                                <span class="text-[9px] font-bold text-slate-400 uppercase">Senha</span>
-                                <button onclick="copyToClipboard('${item.senha}')" class="text-indigo-600 hover:text-indigo-800 text-xs flex items-center gap-1 font-bold">
-                                    <i data-lucide="copy" class="w-3 h-3"></i> COPIAR
-                                </button>
+                        <!-- Senha -->
+                        <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100 flex justify-between items-center group">
+                            <div class="truncate mr-2">
+                                <span class="text-[9px] font-black text-slate-400 uppercase tracking-tighter block">Senha</span>
+                                <span class="text-sm font-mono font-bold text-slate-700 tracking-widest">••••••••</span>
                             </div>
-                            <div class="text-sm font-mono font-medium text-slate-700 flex justify-between items-center">
-                                <span>••••••••</span>
-                                <i data-lucide="lock" class="w-3 h-3 text-slate-300"></i>
-                            </div>
+                            <button onclick="copy('${a.senha}')" class="copy-badge opacity-0 group-hover:opacity-100"><i data-lucide="copy" class="w-4 h-4"></i></button>
                         </div>
+
+                        <!-- CPF Acesso (se houver e for diferente do usuário) -->
+                        ${a.cpf_acesso && a.cpf_acesso !== a.usuario ? `
+                        <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100 flex justify-between items-center group">
+                            <div class="truncate mr-2">
+                                <span class="text-[9px] font-black text-slate-400 uppercase tracking-tighter block">CPF ACESSO</span>
+                                <span class="text-sm font-bold text-slate-700">${a.cpf_acesso}</span>
+                            </div>
+                            <button onclick="copy('${a.cpf_acesso}')" class="copy-badge opacity-0 group-hover:opacity-100"><i data-lucide="copy" class="w-4 h-4"></i></button>
+                        </div>
+                        ` : ''}
+
+                        <!-- Observação em Negrito -->
+                        ${a.obs ? `
+                            <div class="bg-amber-50 p-3 rounded-2xl border border-amber-100 mt-2">
+                                <span class="text-[9px] font-black text-amber-600 uppercase">Observação</span>
+                                <p class="text-xs font-black text-slate-800 leading-tight mt-1">${a.obs}</p>
+                            </div>
+                        ` : ''}
                     </div>
-                    
-                    ${item.unidade ? `
-                        <div class="mt-4 pt-3 border-t border-slate-100 flex items-center gap-2 text-[11px] text-slate-500">
-                            <i data-lucide="map-pin" class="w-3 h-3"></i>
-                            Unidade: <span class="font-bold text-slate-700">${item.unidade}</span>
-                        </div>
-                    ` : ''}
+                </div>
+
+                <!-- Rodapé Card -->
+                <div class="px-6 py-4 bg-slate-50/50 border-t border-slate-100 flex justify-between items-center text-[10px] font-black text-slate-400 uppercase tracking-tighter">
+                    <div class="flex items-center gap-1">
+                        <span>UNID: ${a.unidade || 'N/A'}</span>
+                        <button onclick="copy('${a.unidade}')" class="copy-badge p-1"><i data-lucide="copy" class="w-2.5 h-2.5"></i></button>
+                    </div>
+                    <span>REF: ${a.date}</span>
                 </div>
             </div>
         `).join('');
     }
-
     lucide.createIcons();
 }
 
-// Inicializar a lista ao carregar a página
-window.addEventListener('DOMContentLoaded', render);
+// Inicia
+window.onload = render;
