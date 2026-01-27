@@ -253,7 +253,7 @@ function showDetails(id) {
                     <p class="text-[10px] font-bold text-slate-400 tracking-[0.2em] mt-1 uppercase">Visualização de Credenciais</p>
                 </div>
                 <div class="flex items-center gap-4">
-                    <button onclick="editEntry(${item.id})" class="text-indigo-600 hover:bg-indigo-50 px-4 py-2 rounded-xl transition-all font-black text-[10px] uppercase tracking-widest flex items-center gap-2">
+                    <button onclick="editEntry(${item.id})" class="text-indigo-600 hover:bg-indigo-50 px-4 py-2 rounded-xl transition-all font-black text-[10px] uppercase tracking-widest flex items-center gap-2 cursor-pointer">
                         <i data-lucide="edit-3" class="w-4 h-4"></i> Editar
                     </button>
                     <button onclick="closeDetails()" class="close-btn"><i data-lucide="x"></i></button>
@@ -276,7 +276,7 @@ function showDetails(id) {
             </div>
             <div class="p-6 bg-slate-50 border-t flex justify-between items-center text-[10px] font-black text-slate-400 tracking-widest uppercase">
                 <span>Ref: ${item.date}</span>
-                <button onclick="deleteEntry(${item.id})" class="text-red-400 hover:text-red-600 transition-colors">Excluir Registro</button>
+                <button onclick="deleteEntry(${item.id})" class="text-red-400 hover:text-red-600 transition-colors cursor-pointer">Excluir Registro</button>
             </div>
         </div>
     `;
