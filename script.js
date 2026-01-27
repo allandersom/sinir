@@ -119,12 +119,13 @@ function importJSON(e) {
 
 /**
  * Processamento da Prancheta (Importação em Massa)
+ * Refinado para distinguir "cnpj/cpf" de "cpf"
  */
 function processBulkImport() {
     const text = document.getElementById('bulkImportArea').value;
     if (!text.trim()) return;
 
-    // Divide o texto em blocos baseados no início de cada registro
+    // Divide o texto em blocos (cada bloco começa com CNPJ ou Empresa)
     const blocks = text.split(/(?=cnpj\/cpf:)|(?=empresa:)/i).filter(b => b.trim() !== "");
     
     let added = 0;
@@ -132,10 +133,11 @@ function processBulkImport() {
         const lines = block.split('\n').map(l => l.trim()).filter(l => l !== "");
         
         const find = (label) => {
-            // Regex melhorada para aceitar espaços e variações de separadores
-            const regex = new RegExp(`${label}\\s*[:\\-]?\\s*(.*)`, 'i');
+            // Regex que garante que o rótulo não é precedido por '/' (ex: evita que 'cpf' pegue 'cnpj/cpf')
+            // O rótulo deve estar no início da linha ou após uma quebra de linha
+            const regex = new RegExp(`(^|\\n)(?<!\\/)${label}\\s*[:\\-]?\\s*(.*)`, 'i');
             const match = block.match(regex);
-            return match ? match[1].trim() : "";
+            return match ? match[2].trim() : "";
         };
 
         const senhaIdx = lines.findIndex(l => l.toLowerCase().includes('senha:'));
@@ -146,16 +148,17 @@ function processBulkImport() {
 
         const entry = {
             id: Date.now() + Math.random(),
-            cnpj_cpf: find('cnpj/cpf'),
+            cnpj_cpf: find('cnpj\\/cpf'), // Escapa a barra para o regex
             unidade: find('codigo unidade'),
             empresa: find('empresa'),
             usuario: find('usuario'),
-            cpf_acesso: find('cpf'),
+            cpf_acesso: find('cpf'), // O lookbehind (?<!\/) impede de pegar o 'cnpj/cpf'
             senha: find('senha'),
             obs: obsText,
             date: new Date().toLocaleDateString()
         };
 
+        // Só adiciona se tiver pelo menos o nome da empresa ou senha
         if (entry.empresa || entry.senha) {
             accesses.push(entry);
             added++;
@@ -168,6 +171,8 @@ function processBulkImport() {
         document.getElementById('bulkImportArea').value = "";
         toggleImportModal();
         showToast(`${added} IMPORTADOS!`);
+    } else {
+        alert('Não foi possível encontrar dados. Verifique o formato do texto.');
     }
 }
 
@@ -283,11 +288,11 @@ function render() {
 
                     <h3 class="font-black text-lg text-slate-800 mb-1 truncate uppercase group-hover:text-indigo-700 transition-colors">${a.empresa || 'S/ NOME'}</h3>
                     <div class="flex items-center text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                        <i data-lucide="hash" class="w-3 h-3 mr-1"></i> ${a.cnpj_cpf || '---'}
+                        <i data-lucide="hash" class="w-3 h-3 mr-1"></i> CNPJ: ${a.cnpj_cpf || '---'}
                     </div>
                     
                     <div class="mt-4 pt-3 border-t border-slate-50 flex items-center justify-between">
-                         <span class="text-[9px] font-black text-indigo-500 uppercase tracking-tighter">Ver informações completas</span>
+                         <span class="text-[9px] font-black text-indigo-500 uppercase tracking-tighter">Clique para ver tudo</span>
                          <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300 group-hover:translate-x-1 transition-transform"></i>
                     </div>
                 </div>
@@ -297,5 +302,5 @@ function render() {
     lucide.createIcons();
 }
 
-// Inicialização
+// Inicialização ao carregar a página
 window.onload = render;
