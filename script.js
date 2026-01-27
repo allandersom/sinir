@@ -3,25 +3,17 @@
  * Foco em Design, Ordem Alfabética e Senha sempre Visível.
  */
 
-// Inicialização de Ícones
 lucide.createIcons();
 
-// Banco de Dados Local
 let accesses = JSON.parse(localStorage.getItem('sinir_by_allan_final')) || [];
-
-// Variável de controlo de edição
 let editingId = null;
 
-// Elementos do DOM
 const accessGrid = document.getElementById('accessGrid');
 const searchBar = document.getElementById('searchBar');
 const totalCountLabel = document.getElementById('totalCount');
 const toast = document.getElementById('toast');
 const accessForm = document.getElementById('accessForm');
 
-/**
- * Interface - Modais
- */
 function toggleModal() {
     const modal = document.getElementById('accessModal');
     modal.classList.toggle('hidden');
@@ -35,9 +27,6 @@ function toggleImportModal() {
     document.getElementById('importModal').classList.toggle('hidden');
 }
 
-/**
- * Prepara o modal para um NOVO cadastro
- */
 function prepareNewEntry() {
     editingId = null;
     document.getElementById('modalTitle').textContent = "Novo Registro";
@@ -46,9 +35,6 @@ function prepareNewEntry() {
     toggleModal();
 }
 
-/**
- * Prepara o modal para EDITAR (Senha sempre visível aqui)
- */
 function editEntry(id) {
     const item = accesses.find(a => a.id === id);
     if (!item) return;
@@ -57,22 +43,18 @@ function editEntry(id) {
     document.getElementById('modalTitle').textContent = "Atualizar Acesso";
     document.getElementById('saveBtnText').textContent = "ATUALIZAR REGISTRO";
 
-    // Preenche o formulário
     document.getElementById('empresa').value = item.empresa || "";
     document.getElementById('cnpj_cpf').value = item.cnpj_cpf || "";
     document.getElementById('unidade').value = item.unidade || "";
     document.getElementById('usuario').value = item.usuario || "";
     document.getElementById('cpf_acesso').value = item.cpf_acesso || "";
-    document.getElementById('senha').value = item.senha || ""; // Visível devido ao type="text"
+    document.getElementById('senha').value = item.senha || "";
     document.getElementById('obs').value = item.obs || "";
 
     closeDetails();
     toggleModal();
 }
 
-/**
- * Utilitários - Cópia e Notificação
- */
 function showToast(msg) {
     toast.textContent = msg || 'COPIADO!';
     toast.classList.remove('hidden');
@@ -90,9 +72,6 @@ function copyToClipboard(text) {
     showToast();
 }
 
-/**
- * Persistência
- */
 function saveData() {
     localStorage.setItem('sinir_by_allan_final', JSON.stringify(accesses));
 }
@@ -107,9 +86,6 @@ function deleteEntry(id, event) {
     }
 }
 
-/**
- * Processamento de Formulário
- */
 accessForm.addEventListener('submit', (e) => {
     e.preventDefault();
 
@@ -127,7 +103,7 @@ accessForm.addEventListener('submit', (e) => {
         const index = accesses.findIndex(a => a.id === editingId);
         if (index !== -1) {
             accesses[index] = { ...accesses[index], ...data };
-            showToast('ATUALIZADO COM SUCESSO!');
+            showToast('ATUALIZADO!');
         }
     } else {
         const entry = {
@@ -146,9 +122,6 @@ accessForm.addEventListener('submit', (e) => {
     toggleModal();
 });
 
-/**
- * Backup JSON
- */
 function exportBackup() {
     if (accesses.length === 0) return alert('Sem dados.');
     const blob = new Blob([JSON.stringify(accesses, null, 2)], { type: 'application/json' });
@@ -171,16 +144,13 @@ function importJSON(e) {
                 saveData();
                 render();
                 toggleImportModal();
-                showToast('RESTAURAÇÃO COMPLETA!');
+                showToast('RESTAURADO!');
             }
-        } catch (err) { alert('Arquivo de backup inválido.'); }
+        } catch (err) { alert('Erro no arquivo JSON.'); }
     };
     reader.readAsText(file);
 }
 
-/**
- * Prancheta de Importação
- */
 function processBulkImport() {
     const text = document.getElementById('bulkImportArea').value;
     if (!text.trim()) return;
@@ -226,13 +196,12 @@ function processBulkImport() {
         render();
         document.getElementById('bulkImportArea').value = "";
         toggleImportModal();
-        showToast(`${addedCount} ACESSOS IMPORTADOS!`);
+        showToast(`${addedCount} IMPORTADOS!`);
+    } else {
+        alert('Nenhum dado válido identificado.');
     }
 }
 
-/**
- * Janela de Detalhes (Senha sempre visível aqui)
- */
 function showDetails(id) {
     const item = accesses.find(a => a.id === id);
     if (!item) return;
@@ -250,10 +219,9 @@ function showDetails(id) {
             <div class="modal-header">
                 <div>
                     <h2 class="text-2xl font-black text-indigo-900 uppercase truncate pr-4">${item.empresa || 'DETALHES'}</h2>
-                    <p class="text-[10px] font-bold text-slate-400 tracking-[0.2em] mt-1 uppercase">Visualização de Credenciais</p>
                 </div>
                 <div class="flex items-center gap-4">
-                    <button onclick="editEntry(${item.id})" class="text-indigo-600 hover:bg-indigo-50 px-4 py-2 rounded-xl transition-all font-black text-[10px] uppercase tracking-widest flex items-center gap-2 cursor-pointer">
+                    <button onclick="editEntry(${item.id})" class="text-indigo-600 hover:bg-indigo-50 px-4 py-2 rounded-xl transition-all font-black text-[10px] uppercase tracking-widest flex items-center gap-2">
                         <i data-lucide="edit-3" class="w-4 h-4"></i> Editar
                     </button>
                     <button onclick="closeDetails()" class="close-btn"><i data-lucide="x"></i></button>
@@ -265,7 +233,7 @@ function showDetails(id) {
                 ${renderField('NOME DA EMPRESA:', item.empresa)}
                 ${renderField('USUÁRIO DE ACESSO:', item.usuario)}
                 ${renderField('CPF DO USUÁRIO:', item.cpf_acesso)}
-                ${renderField('SENHA (Sempre Visível):', item.senha)}
+                ${renderField('SENHA:', item.senha)}
                 
                 ${item.obs ? `
                     <div class="bg-amber-50 p-6 rounded-[2.5rem] border-2 border-amber-100/50 mt-8 relative">
@@ -274,9 +242,9 @@ function showDetails(id) {
                     </div>
                 ` : ''}
             </div>
-            <div class="p-6 bg-slate-50 border-t flex justify-between items-center text-[10px] font-black text-slate-400 tracking-widest uppercase">
-                <span>Ref: ${item.date}</span>
-                <button onclick="deleteEntry(${item.id})" class="text-red-400 hover:text-red-600 transition-colors cursor-pointer">Excluir Registro</button>
+            <div class="p-6 bg-slate-50 border-t flex justify-between items-center text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                <span>Data: ${item.date}</span>
+                <button onclick="deleteEntry(${item.id})" class="text-red-400 hover:text-red-600">Eliminar</button>
             </div>
         </div>
     `;
@@ -285,9 +253,6 @@ function showDetails(id) {
     lucide.createIcons();
 }
 
-/**
- * Render de Campo (Sem bolinhas na senha)
- */
 function renderField(label, value) {
     const val = value && value.trim() !== "" ? value : "---";
     return `
@@ -308,9 +273,6 @@ function closeDetails() {
     if (m) m.classList.add('hidden');
 }
 
-/**
- * Render Principal (ORDEM ALFABÉTICA SEMPRE)
- */
 function render() {
     const query = searchBar.value.toLowerCase();
     
@@ -334,32 +296,25 @@ function render() {
             <div onclick="showDetails(${a.id})" class="access-card group">
                 <div class="p-8 flex-1">
                     <div class="flex justify-between items-start mb-6">
-                        <div class="bg-indigo-600 text-white w-16 h-16 rounded-[1.5rem] flex items-center justify-center font-black text-3xl uppercase shadow-lg shadow-indigo-200 group-hover:scale-110 transition-all duration-300">
+                        <div class="bg-indigo-600 text-white w-16 h-16 rounded-[1.5rem] flex items-center justify-center font-black text-3xl uppercase">
                             ${(a.empresa || "?").charAt(0)}
                         </div>
-                        <div class="text-slate-200 group-hover:text-indigo-600 transition-colors">
-                            <i data-lucide="expand" class="w-6 h-6"></i>
-                        </div>
+                        <i data-lucide="expand" class="w-6 h-6 text-slate-200 group-hover:text-indigo-600 transition-colors"></i>
                     </div>
 
-                    <h3 class="font-black text-xl text-slate-800 mb-1 truncate uppercase tracking-tight group-hover:text-indigo-600 transition-colors">
+                    <h3 class="font-black text-xl text-slate-800 mb-1 truncate uppercase tracking-tight group-hover:text-indigo-600">
                         ${a.empresa || 'SEM NOME'}
                     </h3>
                     
                     <div class="flex flex-col gap-2 mt-4">
                         <div class="flex items-center text-[10px] text-slate-400 font-black uppercase tracking-widest">
-                            <span class="w-1.5 h-1.5 bg-slate-300 rounded-full mr-2"></span> CNPJ: ${a.cnpj_cpf || '---'}
-                        </div>
-                        <div class="flex items-center text-[10px] text-slate-400 font-black uppercase tracking-widest">
-                            <span class="w-1.5 h-1.5 bg-slate-300 rounded-full mr-2"></span> UNID: ${a.unidade || 'N/A'}
+                            <i data-lucide="file-text" class="w-3 h-3 mr-2"></i> ${a.cnpj_cpf || '---'}
                         </div>
                     </div>
                     
                     <div class="mt-8 pt-5 border-t border-slate-50 flex items-center justify-between">
-                         <span class="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] group-hover:tracking-[0.3em] transition-all">Ver Detalhes</span>
-                         <div class="bg-indigo-50 p-2 rounded-full group-hover:bg-indigo-600 group-hover:text-white transition-all">
-                            <i data-lucide="chevron-right" class="w-4 h-4"></i>
-                         </div>
+                         <span class="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Credenciais</span>
+                         <i data-lucide="chevron-right" class="w-5 h-5 text-slate-300 group-hover:translate-x-2 transition-transform"></i>
                     </div>
                 </div>
             </div>
