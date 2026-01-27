@@ -1,19 +1,17 @@
-// Inicia os ícones da biblioteca Lucide
+// Inicialização de Ícones
 lucide.createIcons();
 
-// Banco de dados local (localStorage)
-let accesses = JSON.parse(localStorage.getItem('sinir_by_allan_data')) || [];
+// Dados Locais
+let accesses = JSON.parse(localStorage.getItem('sinir_by_allan_final')) || [];
 
-// Referências dos elementos da interface
-const accessForm = document.getElementById('accessForm');
-const searchBar = document.getElementById('searchBar');
+// Elementos Principais
 const accessGrid = document.getElementById('accessGrid');
-const emptyState = document.getElementById('emptyState');
+const searchBar = document.getElementById('searchBar');
 const totalCountLabel = document.getElementById('totalCount');
 const toast = document.getElementById('toast');
 
 /**
- * Funções de controle dos Modais
+ * Interface - Modais
  */
 function toggleModal() {
     document.getElementById('accessModal').classList.toggle('hidden');
@@ -27,7 +25,7 @@ function toggleImportModal() {
 }
 
 /**
- * Sistema de Notificação e Cópia
+ * utilitários - Cópia e Notificação
  */
 function showToast(msg) {
     toast.textContent = msg || 'COPIADO!';
@@ -35,28 +33,27 @@ function showToast(msg) {
     setTimeout(() => toast.classList.add('hidden'), 2000);
 }
 
-function copy(text) {
+function copyToClipboard(text) {
     if (!text || text === '---') return;
-    const el = document.createElement('textarea');
-    el.value = text;
-    document.body.appendChild(el);
-    el.select();
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    document.body.appendChild(textarea);
+    textarea.select();
     document.execCommand('copy');
-    document.body.removeChild(el);
+    document.body.removeChild(textarea);
     showToast();
 }
 
 /**
- * Gerenciamento de Dados (Persistência)
+ * Persistência
  */
 function saveData() {
-    localStorage.setItem('sinir_by_allan_data', JSON.stringify(accesses));
+    localStorage.setItem('sinir_by_allan_final', JSON.stringify(accesses));
 }
 
-function deleteItem(id, event) {
+function deleteEntry(id, event) {
     if (event) event.stopPropagation();
-    
-    if (confirm('Deseja remover este registro permanentemente?')) {
+    if (confirm('REMOVER ESTE REGISTRO PERMANENTEMENTE?')) {
         accesses = accesses.filter(a => a.id !== id);
         saveData();
         render();
@@ -64,8 +61,10 @@ function deleteItem(id, event) {
     }
 }
 
-// Cadastro manual via formulário
-accessForm.addEventListener('submit', (e) => {
+/**
+ * Formulário Manual
+ */
+document.getElementById('accessForm').addEventListener('submit', (e) => {
     e.preventDefault();
     const entry = {
         id: Date.now(),
@@ -81,20 +80,20 @@ accessForm.addEventListener('submit', (e) => {
     accesses.push(entry);
     saveData();
     render();
-    accessForm.reset();
+    e.target.reset();
     toggleModal();
 });
 
 /**
- * Exportação e Importação de Arquivos
+ * Backup JSON
  */
 function exportBackup() {
-    if (accesses.length === 0) return alert('Sem dados para exportar.');
+    if (accesses.length === 0) return alert('Sem dados.');
     const blob = new Blob([JSON.stringify(accesses, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `BACKUP-SINIR-ALLAN-${new Date().toISOString().slice(0,10)}.json`;
+    a.download = `SINIR-ALLAN-BACKUP-${new Date().toISOString().split('T')[0]}.json`;
     a.click();
 }
 
@@ -102,9 +101,9 @@ function importJSON(e) {
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = (ev) => {
         try {
-            const data = JSON.parse(event.target.result);
+            const data = JSON.parse(ev.target.result);
             if (Array.isArray(data)) {
                 accesses = [...accesses, ...data];
                 saveData();
@@ -112,130 +111,124 @@ function importJSON(e) {
                 toggleImportModal();
                 showToast('RESTAURADO!');
             }
-        } catch (err) { alert('Erro no arquivo JSON.'); }
+        } catch (err) { alert('Erro no JSON.'); }
     };
     reader.readAsText(file);
 }
 
 /**
- * Processamento da Prancheta (Importação em Massa)
- * Refinado para distinguir "cnpj/cpf" de "cpf"
+ * Prancheta Inteligente - Importação em Massa
  */
 function processBulkImport() {
     const text = document.getElementById('bulkImportArea').value;
     if (!text.trim()) return;
 
-    // Divide o texto em blocos (cada bloco começa com CNPJ ou Empresa)
+    // Split por Empresa ou CNPJ/CPF inicial
     const blocks = text.split(/(?=cnpj\/cpf:)|(?=empresa:)/i).filter(b => b.trim() !== "");
     
-    let added = 0;
+    let addedCount = 0;
     blocks.forEach(block => {
         const lines = block.split('\n').map(l => l.trim()).filter(l => l !== "");
         
-        const find = (label) => {
-            // Regex que garante que o rótulo não é precedido por '/' (ex: evita que 'cpf' pegue 'cnpj/cpf')
-            // O rótulo deve estar no início da linha ou após uma quebra de linha
-            const regex = new RegExp(`(^|\\n)(?<!\\/)${label}\\s*[:\\-]?\\s*(.*)`, 'i');
+        const extract = (label) => {
+            // Regex refinada com Lookbehind Negativo (?<!\/) para não confundir 'cpf:' com 'cnpj/cpf:'
+            const regex = new RegExp(`(?:^|\\n)(?<!\\/)${label}\\s*[:\\-]?\\s*(.*)`, 'i');
             const match = block.match(regex);
-            return match ? match[2].trim() : "";
+            return match ? match[1].trim() : "";
         };
 
-        const senhaIdx = lines.findIndex(l => l.toLowerCase().includes('senha:'));
-        let obsText = "";
-        if (senhaIdx !== -1 && lines.length > senhaIdx + 1) {
-            obsText = lines.slice(senhaIdx + 1).join(' ');
+        // Identifica onde está a senha para pegar o que sobrou como OBS
+        const senhaLineIdx = lines.findIndex(l => l.toLowerCase().includes('senha:'));
+        let obsValue = "";
+        if (senhaLineIdx !== -1 && lines.length > senhaLineIdx + 1) {
+            obsValue = lines.slice(senhaLineIdx + 1).join(' ');
         }
 
         const entry = {
             id: Date.now() + Math.random(),
-            cnpj_cpf: find('cnpj\\/cpf'), // Escapa a barra para o regex
-            unidade: find('codigo unidade'),
-            empresa: find('empresa'),
-            usuario: find('usuario'),
-            cpf_acesso: find('cpf'), // O lookbehind (?<!\/) impede de pegar o 'cnpj/cpf'
-            senha: find('senha'),
-            obs: obsText,
+            cnpj_cpf: extract('cnpj\\/cpf'),
+            unidade: extract('codigo unidade'),
+            empresa: extract('empresa'),
+            usuario: extract('usuario'),
+            cpf_acesso: extract('cpf'), 
+            senha: extract('senha'),
+            obs: obsValue,
             date: new Date().toLocaleDateString()
         };
 
-        // Só adiciona se tiver pelo menos o nome da empresa ou senha
         if (entry.empresa || entry.senha) {
             accesses.push(entry);
-            added++;
+            addedCount++;
         }
     });
 
-    if (added > 0) {
+    if (addedCount > 0) {
         saveData();
         render();
         document.getElementById('bulkImportArea').value = "";
         toggleImportModal();
-        showToast(`${added} IMPORTADOS!`);
+        showToast(`${addedCount} IMPORTADOS!`);
     } else {
-        alert('Não foi possível encontrar dados. Verifique o formato do texto.');
+        alert('Formato de texto não reconhecido.');
     }
 }
 
 /**
- * Visualização Detalhada do Card
+ * Janela de Detalhes
  */
 function showDetails(id) {
     const item = accesses.find(a => a.id === id);
     if (!item) return;
 
-    let detailsModal = document.getElementById('detailsModal');
-    if (!detailsModal) {
-        detailsModal = document.createElement('div');
-        detailsModal.id = 'detailsModal';
-        detailsModal.className = 'modal-overlay hidden';
-        document.body.appendChild(detailsModal);
+    let modal = document.getElementById('detailsModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'detailsModal';
+        modal.className = 'modal-overlay hidden';
+        document.body.appendChild(modal);
     }
 
-    detailsModal.innerHTML = `
+    modal.innerHTML = `
         <div class="modal-content max-w-xl">
             <div class="modal-header">
-                <h2 class="text-xl font-black text-indigo-800 uppercase truncate pr-4">${item.empresa || 'DETALHES'}</h2>
-                <button onclick="closeDetails()" class="text-slate-400 hover:text-red-500 transition-colors"><i data-lucide="x"></i></button>
+                <h2 class="text-xl font-black text-indigo-900 uppercase truncate pr-4">${item.empresa || 'DETALHES'}</h2>
+                <button onclick="closeDetails()" class="close-btn"><i data-lucide="x"></i></button>
             </div>
-            <div class="p-6 space-y-3 max-h-[70vh] overflow-y-auto custom-scrollbar">
-                
-                ${renderDetailField('CNPJ / CPF:', item.cnpj_cpf)}
-                ${renderDetailField('CÓDIGO UNIDADE:', item.unidade)}
-                ${renderDetailField('EMPRESA:', item.empresa)}
-                ${renderDetailField('USUÁRIO:', item.usuario)}
-                ${renderDetailField('CPF (ACESSO):', item.cpf_acesso)}
-                ${renderDetailField('SENHA:', item.senha, true)}
+            <div class="p-8 space-y-4 max-h-[70vh] overflow-y-auto custom-scrollbar bg-white">
+                ${renderField('CNPJ / CPF DA EMPRESA:', item.cnpj_cpf)}
+                ${renderField('CÓDIGO UNIDADE:', item.unidade)}
+                ${renderField('NOME DA EMPRESA:', item.empresa)}
+                ${renderField('USUÁRIO DE ACESSO:', item.usuario)}
+                ${renderField('CPF DO USUÁRIO:', item.cpf_acesso)}
+                ${renderField('SENHA:', item.senha, true)}
                 
                 ${item.obs ? `
-                    <div class="bg-amber-50 p-4 rounded-2xl border border-amber-100 mt-4">
-                        <span class="text-[10px] font-black text-amber-600 uppercase tracking-widest">Observações</span>
-                        <p class="text-sm font-black text-slate-800 mt-1 leading-tight">${item.obs}</p>
+                    <div class="bg-amber-50 p-5 rounded-[2rem] border-2 border-amber-100 mt-6">
+                        <span class="text-[9px] font-black text-amber-500 uppercase tracking-widest">Observações em Negrito</span>
+                        <p class="text-sm font-black text-slate-800 mt-2 leading-tight uppercase italic">"${item.obs}"</p>
                     </div>
                 ` : ''}
             </div>
-            <div class="p-4 bg-slate-50 border-t flex justify-between items-center text-[10px] font-bold text-slate-400">
-                <span>REF: ${item.date}</span>
-                <button onclick="deleteItem(${item.id})" class="text-red-400 hover:text-red-600 uppercase tracking-tighter">Excluir este registro</button>
+            <div class="p-6 bg-slate-50 border-t flex justify-between items-center text-[10px] font-black text-slate-400">
+                <span>CADASTRADO: ${item.date}</span>
+                <button onclick="deleteEntry(${item.id})" class="text-red-400 hover:text-red-600 tracking-tighter uppercase">Excluir Permanente</button>
             </div>
         </div>
     `;
 
-    detailsModal.classList.remove('hidden');
+    modal.classList.remove('hidden');
     lucide.createIcons();
 }
 
-/**
- * Renderiza cada linha de campo com botão de cópia
- */
-function renderDetailField(label, value, isPassword = false) {
-    const displayValue = value && value.trim() !== "" ? value : "---";
+function renderField(label, value, isPass = false) {
+    const val = value && value.trim() !== "" ? value : "---";
     return `
-        <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100 flex justify-between items-center hover:bg-white hover:border-indigo-200 transition-all group">
-            <div class="truncate mr-2">
-                <span class="text-[9px] font-black text-slate-400 uppercase tracking-tighter block">${label}</span>
-                <span class="text-sm font-bold text-slate-700 ${isPassword ? 'font-mono tracking-widest' : ''}">${displayValue}</span>
+        <div class="detail-box">
+            <div class="truncate mr-4">
+                <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest block">${label}</span>
+                <span class="text-sm font-bold text-slate-800 ${isPass ? 'font-mono tracking-widest' : ''}">${val}</span>
             </div>
-            <button onclick="copy('${displayValue}')" class="bg-white p-2 rounded-xl shadow-sm text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all active:scale-90" title="Copiar">
+            <button onclick="copyToClipboard('${val}')" class="copy-btn">
                 <i data-lucide="copy" class="w-4 h-4"></i>
             </button>
         </div>
@@ -243,17 +236,17 @@ function renderDetailField(label, value, isPassword = false) {
 }
 
 function closeDetails() {
-    const detailsModal = document.getElementById('detailsModal');
-    if (detailsModal) detailsModal.classList.add('hidden');
+    const m = document.getElementById('detailsModal');
+    if (m) m.classList.add('hidden');
 }
 
 /**
- * Renderização da Grade de Cards (Ordem Alfabética)
+ * Render Principal (ORDEM ALFABÉTICA)
  */
 function render() {
     const query = searchBar.value.toLowerCase();
     
-    // Filtra pela busca e ordena de A-Z pela Empresa
+    // Filtro e Ordenação A-Z
     const filtered = accesses
         .filter(a => 
             (a.empresa || "").toLowerCase().includes(query) ||
@@ -261,39 +254,43 @@ function render() {
             (a.usuario || "").toLowerCase().includes(query) ||
             (a.unidade || "").toLowerCase().includes(query)
         )
-        .sort((a, b) => {
-            const nameA = (a.empresa || "").toLowerCase();
-            const nameB = (b.empresa || "").toLowerCase();
-            return nameA.localeCompare(nameB);
-        });
+        .sort((a, b) => (a.empresa || "").toLowerCase().localeCompare((b.empresa || "").toLowerCase()));
 
-    totalCountLabel.textContent = `Total: ${filtered.length}`;
+    totalCountLabel.textContent = `TOTAL: ${filtered.length} REGISTROS`;
     
     if (filtered.length === 0) {
         accessGrid.innerHTML = '';
-        emptyState.classList.remove('hidden');
+        document.getElementById('emptyState').classList.remove('hidden');
     } else {
-        emptyState.classList.add('hidden');
+        document.getElementById('emptyState').classList.add('hidden');
         accessGrid.innerHTML = filtered.map(a => `
-            <div onclick="showDetails(${a.id})" class="access-card cursor-pointer group active:scale-95 transition-transform">
-                <div class="p-6 flex-1">
-                    <div class="flex justify-between items-start mb-3">
-                        <div class="bg-indigo-50 text-indigo-700 w-12 h-12 rounded-2xl flex items-center justify-center font-black text-2xl uppercase group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+            <div onclick="showDetails(${a.id})" class="access-card group">
+                <div class="p-8 flex-1">
+                    <div class="flex justify-between items-start mb-5">
+                        <div class="bg-indigo-50 text-indigo-700 w-14 h-14 rounded-[1.25rem] flex items-center justify-center font-black text-2xl uppercase group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-sm">
                             ${(a.empresa || "?").charAt(0)}
                         </div>
-                        <div class="text-slate-200 group-hover:text-indigo-200 transition-colors">
-                            <i data-lucide="external-link" class="w-5 h-5"></i>
+                        <div class="text-slate-100 group-hover:text-indigo-200 transition-colors">
+                            <i data-lucide="arrow-up-right" class="w-6 h-6"></i>
                         </div>
                     </div>
 
-                    <h3 class="font-black text-lg text-slate-800 mb-1 truncate uppercase group-hover:text-indigo-700 transition-colors">${a.empresa || 'S/ NOME'}</h3>
-                    <div class="flex items-center text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                        <i data-lucide="hash" class="w-3 h-3 mr-1"></i> CNPJ: ${a.cnpj_cpf || '---'}
+                    <h3 class="font-black text-xl text-slate-800 mb-1 truncate uppercase tracking-tight group-hover:text-indigo-700 transition-colors">
+                        ${a.empresa || 'SEM NOME'}
+                    </h3>
+                    
+                    <div class="flex flex-col gap-1">
+                        <div class="flex items-center text-[10px] text-slate-400 font-black uppercase tracking-widest">
+                            <i data-lucide="file-text" class="w-3 h-3 mr-1.5"></i> DOC: ${a.cnpj_cpf || '---'}
+                        </div>
+                        <div class="flex items-center text-[10px] text-slate-400 font-black uppercase tracking-widest">
+                            <i data-lucide="map-pin" class="w-3 h-3 mr-1.5"></i> UNID: ${a.unidade || 'N/A'}
+                        </div>
                     </div>
                     
-                    <div class="mt-4 pt-3 border-t border-slate-50 flex items-center justify-between">
-                         <span class="text-[9px] font-black text-indigo-500 uppercase tracking-tighter">Clique para ver tudo</span>
-                         <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300 group-hover:translate-x-1 transition-transform"></i>
+                    <div class="mt-6 pt-4 border-t-2 border-slate-50 flex items-center justify-between">
+                         <span class="text-[9px] font-black text-indigo-500 uppercase tracking-[0.2em]">ABRIR CREDENCIAIS</span>
+                         <i data-lucide="chevron-right" class="w-5 h-5 text-slate-300 group-hover:translate-x-2 transition-transform"></i>
                     </div>
                 </div>
             </div>
@@ -302,5 +299,5 @@ function render() {
     lucide.createIcons();
 }
 
-// Inicialização ao carregar a página
+// Iniciar sistema
 window.onload = render;
