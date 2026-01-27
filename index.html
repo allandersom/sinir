@@ -25,9 +25,17 @@
                 </h1>
                 <p class="text-slate-500">Organize suas credenciais com segurança local.</p>
             </div>
-            <button onclick="toggleModal()" class="btn-primary">
-                <i data-lucide="plus-circle" class="w-5 h-5"></i> Novo Acesso
-            </button>
+            <div class="flex flex-wrap gap-2">
+                <button onclick="exportBackup()" class="btn-secondary text-xs py-2 px-3 flex items-center gap-1">
+                    <i data-lucide="download" class="w-4 h-4"></i> Backup
+                </button>
+                <button onclick="toggleImportModal()" class="btn-secondary text-xs py-2 px-3 flex items-center gap-1">
+                    <i data-lucide="upload" class="w-4 h-4"></i> Importar
+                </button>
+                <button onclick="toggleModal()" class="btn-primary">
+                    <i data-lucide="plus-circle" class="w-5 h-5"></i> Novo Acesso
+                </button>
+            </div>
         </header>
 
         <!-- Barra de Busca -->
@@ -54,7 +62,7 @@
         </div>
     </div>
 
-    <!-- Modal de Cadastro -->
+    <!-- Modal de Cadastro Individual -->
     <div id="accessModal" class="modal-overlay hidden">
         <div class="modal-content">
             <div class="modal-header">
@@ -95,6 +103,43 @@
                     <button type="submit" class="btn-submit">Salvar Acesso</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Modal de Importação em Massa -->
+    <div id="importModal" class="modal-overlay hidden">
+        <div class="modal-content max-w-2xl">
+            <div class="modal-header">
+                <h2 class="text-xl font-bold text-slate-800">Importação e Restauração</h2>
+                <button onclick="toggleImportModal()" class="close-btn">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-6">
+                <!-- Seção de Arquivo JSON -->
+                <div class="p-4 bg-indigo-50 rounded-xl border border-indigo-100">
+                    <h3 class="font-bold text-indigo-700 mb-2 flex items-center gap-2">
+                        <i data-lucide="file-json" class="w-4 h-4"></i> Restaurar via Arquivo JSON
+                    </h3>
+                    <p class="text-xs text-indigo-600/70 mb-3">Selecione o arquivo .json baixado anteriormente para restaurar todos os dados.</p>
+                    <input type="file" id="jsonFileInput" accept=".json" class="hidden" onchange="importJSON(event)">
+                    <button onclick="document.getElementById('jsonFileInput').click()" class="w-full py-2 bg-white border-2 border-dashed border-indigo-200 text-indigo-600 rounded-lg text-sm font-bold hover:bg-indigo-100 transition">
+                        Selecionar Arquivo de Backup
+                    </button>
+                </div>
+
+                <!-- Prancheta de Texto -->
+                <div>
+                    <h3 class="font-bold text-slate-700 mb-2 flex items-center gap-2">
+                        <i data-lucide="clipboard-list" class="w-4 h-4"></i> Prancheta de Importação (Texto)
+                    </h3>
+                    <p class="text-xs text-slate-500 mb-3">Cole um ou mais blocos de texto no formato: <i>cnpj/cpf, codigo unidade, empresa, usuario, cpf, senha</i>.</p>
+                    <textarea id="bulkImportArea" rows="8" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="cnpj/cpf: 00.000...&#10;codigo unidade: 123&#10;empresa: Nome Exemplo&#10;usuario: admin&#10;cpf: 111.222...&#10;senha: 123456"></textarea>
+                    <button onclick="processBulkImport()" class="w-full mt-3 py-3 bg-slate-800 text-white rounded-lg font-bold hover:bg-slate-900 transition flex items-center justify-center gap-2">
+                        <i data-lucide="zap" class="w-4 h-4 text-yellow-400"></i> Processar e Adicionar
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
