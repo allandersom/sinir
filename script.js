@@ -1,18 +1,18 @@
 /**
- * ACESSO DO SINIR BY ALLAN
- * Sistema de gestão de credenciais com armazenamento local, importação em massa e edição.
+ * ACESSO DO SINIR BY ALLAN - Versão Premium
+ * Foco em Design, Ordem Alfabética e Senha sempre Visível.
  */
 
 // Inicialização de Ícones
 lucide.createIcons();
 
-// Dados Locais
+// Banco de Dados Local
 let accesses = JSON.parse(localStorage.getItem('sinir_by_allan_final')) || [];
 
 // Variável de controlo de edição
 let editingId = null;
 
-// Elementos Principais
+// Elementos do DOM
 const accessGrid = document.getElementById('accessGrid');
 const searchBar = document.getElementById('searchBar');
 const totalCountLabel = document.getElementById('totalCount');
@@ -40,35 +40,33 @@ function toggleImportModal() {
  */
 function prepareNewEntry() {
     editingId = null;
-    document.getElementById('modalTitle').textContent = "Adicionar Cadastro";
-    document.getElementById('saveBtnText').textContent = "SALVAR REGISTRO";
+    document.getElementById('modalTitle').textContent = "Novo Registro";
+    document.getElementById('saveBtnText').textContent = "SALVAR DADOS";
     accessForm.reset();
     toggleModal();
 }
 
 /**
- * Prepara o modal para EDITAR um cadastro existente
+ * Prepara o modal para EDITAR (Senha sempre visível aqui)
  */
 function editEntry(id) {
     const item = accesses.find(a => a.id === id);
     if (!item) return;
 
     editingId = id;
-    document.getElementById('modalTitle').textContent = "Editar Cadastro";
-    document.getElementById('saveBtnText').textContent = "SALVAR ALTERAÇÕES";
+    document.getElementById('modalTitle').textContent = "Atualizar Acesso";
+    document.getElementById('saveBtnText').textContent = "ATUALIZAR REGISTRO";
 
-    // Preenche o formulário com os dados atuais
+    // Preenche o formulário
     document.getElementById('empresa').value = item.empresa || "";
     document.getElementById('cnpj_cpf').value = item.cnpj_cpf || "";
     document.getElementById('unidade').value = item.unidade || "";
     document.getElementById('usuario').value = item.usuario || "";
     document.getElementById('cpf_acesso').value = item.cpf_acesso || "";
-    document.getElementById('senha').value = item.senha || "";
+    document.getElementById('senha').value = item.senha || ""; // Visível devido ao type="text"
     document.getElementById('obs').value = item.obs || "";
 
-    // Fecha o modal de detalhes se estiver aberto
     closeDetails();
-    // Abre o modal de cadastro/edição
     toggleModal();
 }
 
@@ -93,7 +91,7 @@ function copyToClipboard(text) {
 }
 
 /**
- * Persistência e Gestão de Dados
+ * Persistência
  */
 function saveData() {
     localStorage.setItem('sinir_by_allan_final', JSON.stringify(accesses));
@@ -110,7 +108,7 @@ function deleteEntry(id, event) {
 }
 
 /**
- * Processamento de Formulário (Criação e Atualização)
+ * Processamento de Formulário
  */
 accessForm.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -126,21 +124,19 @@ accessForm.addEventListener('submit', (e) => {
     };
 
     if (editingId) {
-        // Modo Edição: Atualiza o item existente
         const index = accesses.findIndex(a => a.id === editingId);
         if (index !== -1) {
             accesses[index] = { ...accesses[index], ...data };
-            showToast('ATUALIZADO!');
+            showToast('ATUALIZADO COM SUCESSO!');
         }
     } else {
-        // Modo Criação: Adiciona novo item
         const entry = {
             id: Date.now(),
             ...data,
             date: new Date().toLocaleDateString()
         };
         accesses.push(entry);
-        showToast('SALVO!');
+        showToast('CADASTRO REALIZADO!');
     }
 
     saveData();
@@ -175,15 +171,15 @@ function importJSON(e) {
                 saveData();
                 render();
                 toggleImportModal();
-                showToast('RESTAURADO!');
+                showToast('RESTAURAÇÃO COMPLETA!');
             }
-        } catch (err) { alert('Erro no arquivo JSON.'); }
+        } catch (err) { alert('Arquivo de backup inválido.'); }
     };
     reader.readAsText(file);
 }
 
 /**
- * Prancheta Inteligente
+ * Prancheta de Importação
  */
 function processBulkImport() {
     const text = document.getElementById('bulkImportArea').value;
@@ -230,12 +226,12 @@ function processBulkImport() {
         render();
         document.getElementById('bulkImportArea').value = "";
         toggleImportModal();
-        showToast(`${addedCount} IMPORTADOS!`);
+        showToast(`${addedCount} ACESSOS IMPORTADOS!`);
     }
 }
 
 /**
- * Janela de Detalhes
+ * Janela de Detalhes (Senha sempre visível aqui)
  */
 function showDetails(id) {
     const item = accesses.find(a => a.id === id);
@@ -252,32 +248,35 @@ function showDetails(id) {
     modal.innerHTML = `
         <div class="modal-content max-w-xl">
             <div class="modal-header">
-                <h2 class="text-xl font-black text-indigo-900 uppercase truncate pr-4">${item.empresa || 'DETALHES'}</h2>
+                <div>
+                    <h2 class="text-2xl font-black text-indigo-900 uppercase truncate pr-4">${item.empresa || 'DETALHES'}</h2>
+                    <p class="text-[10px] font-bold text-slate-400 tracking-[0.2em] mt-1 uppercase">Visualização de Credenciais</p>
+                </div>
                 <div class="flex items-center gap-4">
-                    <button onclick="editEntry(${item.id})" class="text-indigo-600 hover:text-indigo-800 font-black text-[10px] uppercase tracking-widest flex items-center gap-1">
-                        <i data-lucide="edit-3" class="w-3 h-3"></i> Editar
+                    <button onclick="editEntry(${item.id})" class="text-indigo-600 hover:bg-indigo-50 px-4 py-2 rounded-xl transition-all font-black text-[10px] uppercase tracking-widest flex items-center gap-2">
+                        <i data-lucide="edit-3" class="w-4 h-4"></i> Editar
                     </button>
                     <button onclick="closeDetails()" class="close-btn"><i data-lucide="x"></i></button>
                 </div>
             </div>
-            <div class="p-8 space-y-4 max-h-[70vh] overflow-y-auto custom-scrollbar bg-white">
+            <div class="p-10 space-y-4 max-h-[70vh] overflow-y-auto custom-scrollbar bg-white">
                 ${renderField('CNPJ / CPF DA EMPRESA:', item.cnpj_cpf)}
                 ${renderField('CÓDIGO UNIDADE:', item.unidade)}
                 ${renderField('NOME DA EMPRESA:', item.empresa)}
                 ${renderField('USUÁRIO DE ACESSO:', item.usuario)}
                 ${renderField('CPF DO USUÁRIO:', item.cpf_acesso)}
-                ${renderField('SENHA:', item.senha, true)}
+                ${renderField('SENHA (Sempre Visível):', item.senha)}
                 
                 ${item.obs ? `
-                    <div class="bg-amber-50 p-5 rounded-[2rem] border-2 border-amber-100 mt-6">
-                        <span class="text-[9px] font-black text-amber-500 uppercase tracking-widest">Observações</span>
-                        <p class="text-sm font-black text-slate-800 mt-2 leading-tight uppercase italic">"${item.obs}"</p>
+                    <div class="bg-amber-50 p-6 rounded-[2.5rem] border-2 border-amber-100/50 mt-8 relative">
+                        <span class="absolute -top-3 left-6 bg-amber-500 text-white px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest">Anotações</span>
+                        <p class="text-sm font-black text-slate-800 leading-relaxed uppercase italic">"${item.obs}"</p>
                     </div>
                 ` : ''}
             </div>
-            <div class="p-6 bg-slate-50 border-t flex justify-between items-center text-[10px] font-black text-slate-400">
-                <span>CADASTRADO: ${item.date}</span>
-                <button onclick="deleteEntry(${item.id})" class="text-red-400 hover:text-red-600 tracking-tighter uppercase font-black">Eliminar Registro</button>
+            <div class="p-6 bg-slate-50 border-t flex justify-between items-center text-[10px] font-black text-slate-400 tracking-widest uppercase">
+                <span>Ref: ${item.date}</span>
+                <button onclick="deleteEntry(${item.id})" class="text-red-400 hover:text-red-600 transition-colors">Excluir Registro</button>
             </div>
         </div>
     `;
@@ -286,13 +285,16 @@ function showDetails(id) {
     lucide.createIcons();
 }
 
-function renderField(label, value, isPass = false) {
+/**
+ * Render de Campo (Sem bolinhas na senha)
+ */
+function renderField(label, value) {
     const val = value && value.trim() !== "" ? value : "---";
     return `
         <div class="detail-box">
             <div class="truncate mr-4">
-                <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest block">${label}</span>
-                <span class="text-sm font-bold text-slate-800 ${isPass ? 'font-mono tracking-widest' : ''}">${val}</span>
+                <span class="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-1">${label}</span>
+                <span class="text-sm font-bold text-slate-800">${val}</span>
             </div>
             <button onclick="copyToClipboard('${val}')" class="copy-btn">
                 <i data-lucide="copy" class="w-4 h-4"></i>
@@ -307,7 +309,7 @@ function closeDetails() {
 }
 
 /**
- * Render Principal
+ * Render Principal (ORDEM ALFABÉTICA SEMPRE)
  */
 function render() {
     const query = searchBar.value.toLowerCase();
@@ -331,31 +333,33 @@ function render() {
         accessGrid.innerHTML = filtered.map(a => `
             <div onclick="showDetails(${a.id})" class="access-card group">
                 <div class="p-8 flex-1">
-                    <div class="flex justify-between items-start mb-5">
-                        <div class="bg-indigo-50 text-indigo-700 w-14 h-14 rounded-[1.25rem] flex items-center justify-center font-black text-2xl uppercase group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-sm">
+                    <div class="flex justify-between items-start mb-6">
+                        <div class="bg-indigo-600 text-white w-16 h-16 rounded-[1.5rem] flex items-center justify-center font-black text-3xl uppercase shadow-lg shadow-indigo-200 group-hover:scale-110 transition-all duration-300">
                             ${(a.empresa || "?").charAt(0)}
                         </div>
-                        <div class="text-slate-100 group-hover:text-indigo-200 transition-colors">
-                            <i data-lucide="arrow-up-right" class="w-6 h-6"></i>
+                        <div class="text-slate-200 group-hover:text-indigo-600 transition-colors">
+                            <i data-lucide="expand" class="w-6 h-6"></i>
                         </div>
                     </div>
 
-                    <h3 class="font-black text-xl text-slate-800 mb-1 truncate uppercase tracking-tight group-hover:text-indigo-700 transition-colors">
+                    <h3 class="font-black text-xl text-slate-800 mb-1 truncate uppercase tracking-tight group-hover:text-indigo-600 transition-colors">
                         ${a.empresa || 'SEM NOME'}
                     </h3>
                     
-                    <div class="flex flex-col gap-1">
+                    <div class="flex flex-col gap-2 mt-4">
                         <div class="flex items-center text-[10px] text-slate-400 font-black uppercase tracking-widest">
-                            <i data-lucide="file-text" class="w-3 h-3 mr-1.5 text-indigo-400"></i> DOC: ${a.cnpj_cpf || '---'}
+                            <span class="w-1.5 h-1.5 bg-slate-300 rounded-full mr-2"></span> CNPJ: ${a.cnpj_cpf || '---'}
                         </div>
                         <div class="flex items-center text-[10px] text-slate-400 font-black uppercase tracking-widest">
-                            <i data-lucide="map-pin" class="w-3 h-3 mr-1.5 text-indigo-400"></i> UNID: ${a.unidade || 'N/A'}
+                            <span class="w-1.5 h-1.5 bg-slate-300 rounded-full mr-2"></span> UNID: ${a.unidade || 'N/A'}
                         </div>
                     </div>
                     
-                    <div class="mt-6 pt-4 border-t-2 border-slate-50 flex items-center justify-between">
-                         <span class="text-[9px] font-black text-indigo-500 uppercase tracking-[0.2em]">ABRIR CREDENCIAIS</span>
-                         <i data-lucide="chevron-right" class="w-5 h-5 text-slate-300 group-hover:translate-x-2 transition-transform"></i>
+                    <div class="mt-8 pt-5 border-t border-slate-50 flex items-center justify-between">
+                         <span class="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] group-hover:tracking-[0.3em] transition-all">Ver Detalhes</span>
+                         <div class="bg-indigo-50 p-2 rounded-full group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                         </div>
                     </div>
                 </div>
             </div>
