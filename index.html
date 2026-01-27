@@ -3,73 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AccessVault | Gerenciador de Acessos</title>
+    <title>ACESSO DO SINIR BY ALLAN</title>
     
-    <!-- Tailwind CSS para Layout -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Arquivo CSS Personalizado -->
+    <!-- Estilos Personalizados -->
     <link rel="stylesheet" href="style.css">
     
-    <!-- Ícones -->
+    <!-- Ícones Lucide -->
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-900">
 
     <div class="max-w-6xl mx-auto p-4 md:p-8">
         <!-- Cabeçalho -->
-        <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 border-b border-slate-200 pb-6">
             <div>
-                <h1 class="text-3xl font-bold text-indigo-700 flex items-center gap-2">
-                    <i data-lucide="shield-check"></i> AccessVault
+                <h1 class="text-3xl font-black text-indigo-800 tracking-tighter flex items-center gap-2">
+                    <i data-lucide="shield-check" class="w-8 h-8"></i> ACESSO DO SINIR BY ALLAN
                 </h1>
-                <p class="text-slate-500">Organize suas credenciais com segurança local.</p>
+                <p class="text-slate-500 font-medium">Gestão técnica de acessos e unidades.</p>
             </div>
             <div class="flex flex-wrap gap-2">
-                <button onclick="exportBackup()" class="btn-secondary text-xs py-2 px-3 flex items-center gap-1">
-                    <i data-lucide="download" class="w-4 h-4"></i> Backup
+                <button onclick="exportBackup()" class="btn-tool" title="Exportar Backup">
+                    <i data-lucide="download"></i> Backup
                 </button>
-                <button onclick="toggleImportModal()" class="btn-secondary text-xs py-2 px-3 flex items-center gap-1">
-                    <i data-lucide="upload" class="w-4 h-4"></i> Importar
+                <button onclick="toggleImportModal()" class="btn-tool" title="Importar em Massa">
+                    <i data-lucide="clipboard-list"></i> Prancheta
                 </button>
                 <button onclick="toggleModal()" class="btn-primary">
-                    <i data-lucide="plus-circle" class="w-5 h-5"></i> Novo Acesso
+                    <i data-lucide="plus"></i> Novo Acesso
                 </button>
             </div>
         </header>
 
-        <!-- Barra de Busca -->
-        <div class="relative mb-6">
-            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5"></i>
-            <input type="text" id="searchBar" placeholder="Buscar por empresa, usuário ou CNPJ..." 
-                class="search-input">
+        <!-- Busca -->
+        <div class="relative mb-8">
+            <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5"></i>
+            <input type="text" id="searchBar" oninput="render()" placeholder="Pesquisar por empresa, CNPJ, usuário ou unidade..." 
+                class="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-2xl shadow-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all text-lg">
         </div>
 
         <!-- Estatísticas -->
-        <div id="stats" class="mb-6">
-            <span id="totalCount" class="badge">Total: 0</span>
+        <div class="mb-6">
+            <span id="totalCount" class="bg-indigo-100 text-indigo-700 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest">Total: 0</span>
         </div>
 
         <!-- Grade de Acessos -->
         <div id="accessGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- Cards gerados via JavaScript -->
+            <!-- Cards gerados via JS -->
         </div>
 
         <!-- Estado Vazio -->
-        <div id="emptyState" class="hidden empty-container">
-            <i data-lucide="database" class="w-16 h-16 mb-4 opacity-20"></i>
-            <p class="text-lg text-slate-400">Nenhum acesso encontrado.</p>
+        <div id="emptyState" class="hidden flex flex-col items-center justify-center py-20 text-slate-300">
+            <i data-lucide="layout-grid" class="w-16 h-16 mb-4 opacity-20"></i>
+            <p class="text-xl font-bold">Nenhum registro encontrado.</p>
         </div>
     </div>
 
-    <!-- Modal de Cadastro Individual -->
+    <!-- Modal de Cadastro Manual -->
     <div id="accessModal" class="modal-overlay hidden">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 class="text-xl font-bold text-slate-800">Novo Acesso</h2>
-                <button onclick="toggleModal()" class="close-btn">
-                    <i data-lucide="x"></i>
-                </button>
+                <h2 class="text-xl font-bold">Novo Cadastro</h2>
+                <button onclick="toggleModal()" class="text-slate-400 hover:text-red-500"><i data-lucide="x"></i></button>
             </div>
             <form id="accessForm" class="p-6 space-y-4">
                 <div class="grid grid-cols-2 gap-4">
@@ -97,56 +95,46 @@
                         <label class="label">Senha *</label>
                         <input type="password" id="senha" required class="input">
                     </div>
+                    <div class="col-span-2">
+                        <label class="label">Observações</label>
+                        <textarea id="obs" class="input" rows="2" placeholder="Qualquer coisa abaixo da senha..."></textarea>
+                    </div>
                 </div>
                 <div class="flex gap-3 pt-4">
-                    <button type="button" onclick="toggleModal()" class="btn-secondary">Cancelar</button>
-                    <button type="submit" class="btn-submit">Salvar Acesso</button>
+                    <button type="button" onclick="toggleModal()" class="btn-cancel">Cancelar</button>
+                    <button type="submit" class="btn-save">Salvar Acesso</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Modal de Importação em Massa -->
+    <!-- Modal Prancheta de Importação -->
     <div id="importModal" class="modal-overlay hidden">
         <div class="modal-content max-w-2xl">
             <div class="modal-header">
-                <h2 class="text-xl font-bold text-slate-800">Importação e Restauração</h2>
-                <button onclick="toggleImportModal()" class="close-btn">
-                    <i data-lucide="x"></i>
-                </button>
+                <div class="flex items-center gap-2">
+                    <i data-lucide="clipboard-paste" class="text-indigo-600"></i>
+                    <h2 class="text-xl font-bold">Prancheta de Importação</h2>
+                </div>
+                <button onclick="toggleImportModal()" class="text-slate-400 hover:text-red-500"><i data-lucide="x"></i></button>
             </div>
-            <div class="p-6 space-y-6">
-                <!-- Seção de Arquivo JSON -->
-                <div class="p-4 bg-indigo-50 rounded-xl border border-indigo-100">
-                    <h3 class="font-bold text-indigo-700 mb-2 flex items-center gap-2">
-                        <i data-lucide="file-json" class="w-4 h-4"></i> Restaurar via Arquivo JSON
-                    </h3>
-                    <p class="text-xs text-indigo-600/70 mb-3">Selecione o arquivo .json baixado anteriormente para restaurar todos os dados.</p>
+            <div class="p-6 space-y-4">
+                <div class="flex gap-4 mb-2">
+                    <button onclick="document.getElementById('jsonFileInput').click()" class="text-xs font-bold text-indigo-600 hover:underline">Restaurar de arquivo .JSON</button>
                     <input type="file" id="jsonFileInput" accept=".json" class="hidden" onchange="importJSON(event)">
-                    <button onclick="document.getElementById('jsonFileInput').click()" class="w-full py-2 bg-white border-2 border-dashed border-indigo-200 text-indigo-600 rounded-lg text-sm font-bold hover:bg-indigo-100 transition">
-                        Selecionar Arquivo de Backup
-                    </button>
                 </div>
-
-                <!-- Prancheta de Texto -->
-                <div>
-                    <h3 class="font-bold text-slate-700 mb-2 flex items-center gap-2">
-                        <i data-lucide="clipboard-list" class="w-4 h-4"></i> Prancheta de Importação (Texto)
-                    </h3>
-                    <p class="text-xs text-slate-500 mb-3">Cole um ou mais blocos de texto no formato: <i>cnpj/cpf, codigo unidade, empresa, usuario, cpf, senha</i>.</p>
-                    <textarea id="bulkImportArea" rows="8" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="cnpj/cpf: 00.000...&#10;codigo unidade: 123&#10;empresa: Nome Exemplo&#10;usuario: admin&#10;cpf: 111.222...&#10;senha: 123456"></textarea>
-                    <button onclick="processBulkImport()" class="w-full mt-3 py-3 bg-slate-800 text-white rounded-lg font-bold hover:bg-slate-900 transition flex items-center justify-center gap-2">
-                        <i data-lucide="zap" class="w-4 h-4 text-yellow-400"></i> Processar e Adicionar
-                    </button>
-                </div>
+                <p class="text-xs text-slate-500 font-medium">Cole aqui vários blocos de texto. O sistema vai separar cada acesso automaticamente.</p>
+                <textarea id="bulkImportArea" rows="12" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-mono focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="cnpj/cpf: ...&#10;codigo unidade: ...&#10;empresa: ...&#10;usuario: ...&#10;cpf: ...&#10;senha: ...&#10;OBSERVAÇÃO AQUI"></textarea>
+                <button onclick="processBulkImport()" class="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-black transition-all flex items-center justify-center gap-2">
+                    <i data-lucide="zap" class="text-yellow-400"></i> Processar e Adicionar
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- Toast Notification -->
-    <div id="toast" class="toast hidden">Copiado com sucesso!</div>
+    <!-- Toast de Confirmação -->
+    <div id="toast" class="toast hidden">Copiado!</div>
 
-    <!-- Arquivo JavaScript -->
     <script src="script.js"></script>
 </body>
 </html>
