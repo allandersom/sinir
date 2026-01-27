@@ -19,7 +19,7 @@ body {
 
 /* Componentes */
 .btn-primary {
-    @apply bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-medium transition-all flex items-center gap-2 shadow-lg shadow-indigo-200 active:scale-95;
+    @apply bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-medium transition-all flex items-center gap-2 shadow-lg shadow-indigo-200 active:scale-95 whitespace-nowrap;
 }
 
 .search-input {
@@ -62,7 +62,7 @@ body {
 }
 
 .btn-secondary {
-    @apply flex-1 px-4 py-2 border border-slate-300 rounded-lg font-medium hover:bg-slate-50 transition active:bg-slate-100;
+    @apply px-4 py-2 border border-slate-300 rounded-lg font-medium hover:bg-slate-50 transition active:bg-slate-100 bg-white text-slate-600;
 }
 
 .btn-submit {
