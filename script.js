@@ -151,40 +151,47 @@ function importJSON(e) {
     reader.readAsText(file);
 }
 
+/**
+ * Função de Processamento de Importação em Massa (Prancheta)
+ * Corrigida para mapear exatamente os campos CNPJ, Unidade, Empresa, Usuário, CPF e Senha.
+ */
 function processBulkImport() {
     const text = document.getElementById('bulkImportArea').value;
     if (!text.trim()) return;
 
-    const blocks = text.split(/(?=cnpj\/cpf:)|(?=empresa:)/i).filter(b => b.trim() !== "");
+    // Divide em blocos caso o usuário cole vários seguidos (iniciando por CNPJ ou Empresa)
+    const blocks = text.split(/(?=cnpj:)|(?=empresa:)|(?=cnpj\/cpf:)/i).filter(b => b.trim() !== "");
     
     let addedCount = 0;
     blocks.forEach(block => {
         const lines = block.split('\n').map(l => l.trim()).filter(l => l !== "");
-        
-        const extract = (label) => {
-            const regex = new RegExp(`(?:^|\\n)(?<!\\/)${label}\\s*[:\\-]?\\s*(.*)`, 'i');
-            const match = block.match(regex);
-            return match ? match[1].trim() : "";
-        };
-
-        const senhaLineIdx = lines.findIndex(l => l.toLowerCase().includes('senha:'));
-        let obsValue = "";
-        if (senhaLineIdx !== -1 && lines.length > senhaLineIdx + 1) {
-            obsValue = lines.slice(senhaLineIdx + 1).join(' ');
-        }
-
         const entry = {
             id: Date.now() + Math.random(),
-            cnpj_cpf: extract('cnpj\\/cpf'),
-            unidade: extract('codigo unidade'),
-            empresa: extract('empresa'),
-            usuario: extract('usuario'),
-            cpf_acesso: extract('cpf'), 
-            senha: extract('senha'),
-            obs: obsValue,
-            date: new Date().toLocaleDateString()
+            date: new Date().toLocaleDateString(),
+            cnpj_cpf: "", unidade: "", empresa: "", usuario: "", cpf_acesso: "", senha: "", obs: ""
         };
 
+        // Mapeamento linha a linha baseado nos rótulos específicos
+        lines.forEach(line => {
+            const lower = line.toLowerCase();
+            const val = line.split(/[:\-](.+)/)[1]?.trim() || "";
+
+            if (lower.startsWith('cnpj:')) entry.cnpj_cpf = val;
+            else if (lower.startsWith('cnpj/cpf:')) entry.cnpj_cpf = val;
+            else if (lower.startsWith('código unidade:') || lower.startsWith('codigo unidade:')) entry.unidade = val;
+            else if (lower.startsWith('empresa:')) entry.empresa = val;
+            else if (lower.startsWith('usuário:') || lower.startsWith('usuario:')) entry.usuario = val;
+            else if (lower.startsWith('cpf:')) entry.cpf_acesso = val;
+            else if (lower.startsWith('senha:')) entry.senha = val;
+        });
+
+        // Captura o que sobrou após a linha da senha como Observação
+        const senhaLineIdx = lines.findIndex(l => l.toLowerCase().startsWith('senha:'));
+        if (senhaLineIdx !== -1 && lines.length > senhaLineIdx + 1) {
+            entry.obs = lines.slice(senhaLineIdx + 1).join(' ').trim();
+        }
+
+        // Critério para considerar o registro válido
         if (entry.empresa || entry.senha) {
             accesses.push(entry);
             addedCount++;
@@ -196,9 +203,9 @@ function processBulkImport() {
         render();
         document.getElementById('bulkImportArea').value = "";
         toggleImportModal();
-        showToast(`${addedCount} IMPORTADOS!`);
+        showToast(`${addedCount} ACESSOS IMPORTADOS!`);
     } else {
-        alert('Nenhum dado válido identificado.');
+        alert('Formato não reconhecido. Certifique-se de usar "Campo: Valor"');
     }
 }
 
