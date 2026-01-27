@@ -1,27 +1,33 @@
 /**
  * ACESSO DO SINIR BY ALLAN
- * Sistema de gestão de credenciais com armazenamento local e importação em massa.
+ * Sistema de gestão de credenciais com armazenamento local, importação em massa e edição.
  */
 
-// Inicialização de Ícones (Biblioteca Lucide)
+// Inicialização de Ícones
 lucide.createIcons();
 
-// Dados Locais - Tenta carregar do LocalStorage ou inicia um array vazio
+// Dados Locais
 let accesses = JSON.parse(localStorage.getItem('sinir_by_allan_final')) || [];
 
-// Elementos Principais da Interface
+// Variável de controlo de edição
+let editingId = null;
+
+// Elementos Principais
 const accessGrid = document.getElementById('accessGrid');
 const searchBar = document.getElementById('searchBar');
 const totalCountLabel = document.getElementById('totalCount');
 const toast = document.getElementById('toast');
+const accessForm = document.getElementById('accessForm');
 
 /**
- * Interface - Controlo de Modais
+ * Interface - Modais
  */
 function toggleModal() {
-    document.getElementById('accessModal').classList.toggle('hidden');
-    if (!document.getElementById('accessModal').classList.contains('hidden')) {
-        document.getElementById('empresa').focus();
+    const modal = document.getElementById('accessModal');
+    modal.classList.toggle('hidden');
+    if (modal.classList.contains('hidden')) {
+        editingId = null;
+        accessForm.reset();
     }
 }
 
@@ -30,12 +36,48 @@ function toggleImportModal() {
 }
 
 /**
- * Utilitários - Sistema de Cópia e Notificação
+ * Prepara o modal para um NOVO cadastro
+ */
+function prepareNewEntry() {
+    editingId = null;
+    document.getElementById('modalTitle').textContent = "Adicionar Cadastro";
+    document.getElementById('saveBtnText').textContent = "SALVAR REGISTRO";
+    accessForm.reset();
+    toggleModal();
+}
+
+/**
+ * Prepara o modal para EDITAR um cadastro existente
+ */
+function editEntry(id) {
+    const item = accesses.find(a => a.id === id);
+    if (!item) return;
+
+    editingId = id;
+    document.getElementById('modalTitle').textContent = "Editar Cadastro";
+    document.getElementById('saveBtnText').textContent = "SALVAR ALTERAÇÕES";
+
+    // Preenche o formulário com os dados atuais
+    document.getElementById('empresa').value = item.empresa || "";
+    document.getElementById('cnpj_cpf').value = item.cnpj_cpf || "";
+    document.getElementById('unidade').value = item.unidade || "";
+    document.getElementById('usuario').value = item.usuario || "";
+    document.getElementById('cpf_acesso').value = item.cpf_acesso || "";
+    document.getElementById('senha').value = item.senha || "";
+    document.getElementById('obs').value = item.obs || "";
+
+    // Fecha o modal de detalhes se estiver aberto
+    closeDetails();
+    // Abre o modal de cadastro/edição
+    toggleModal();
+}
+
+/**
+ * Utilitários - Cópia e Notificação
  */
 function showToast(msg) {
     toast.textContent = msg || 'COPIADO!';
     toast.classList.remove('hidden');
-    // Remove a notificação após 2 segundos
     setTimeout(() => toast.classList.add('hidden'), 2000);
 }
 
@@ -58,9 +100,7 @@ function saveData() {
 }
 
 function deleteEntry(id, event) {
-    // Impede que o clique no botão abra o modal de detalhes
     if (event) event.stopPropagation();
-    
     if (confirm('REMOVER ESTE REGISTRO PERMANENTEMENTE?')) {
         accesses = accesses.filter(a => a.id !== id);
         saveData();
@@ -70,12 +110,12 @@ function deleteEntry(id, event) {
 }
 
 /**
- * Processamento de Formulário Manual
+ * Processamento de Formulário (Criação e Atualização)
  */
-document.getElementById('accessForm').addEventListener('submit', (e) => {
+accessForm.addEventListener('submit', (e) => {
     e.preventDefault();
-    const entry = {
-        id: Date.now(),
+
+    const data = {
         empresa: document.getElementById('empresa').value,
         cnpj_cpf: document.getElementById('cnpj_cpf').value,
         unidade: document.getElementById('unidade').value,
@@ -83,20 +123,38 @@ document.getElementById('accessForm').addEventListener('submit', (e) => {
         cpf_acesso: document.getElementById('cpf_acesso').value,
         senha: document.getElementById('senha').value,
         obs: document.getElementById('obs').value,
-        date: new Date().toLocaleDateString()
     };
-    accesses.push(entry);
+
+    if (editingId) {
+        // Modo Edição: Atualiza o item existente
+        const index = accesses.findIndex(a => a.id === editingId);
+        if (index !== -1) {
+            accesses[index] = { ...accesses[index], ...data };
+            showToast('ATUALIZADO!');
+        }
+    } else {
+        // Modo Criação: Adiciona novo item
+        const entry = {
+            id: Date.now(),
+            ...data,
+            date: new Date().toLocaleDateString()
+        };
+        accesses.push(entry);
+        showToast('SALVO!');
+    }
+
     saveData();
     render();
-    e.target.reset();
+    editingId = null;
+    accessForm.reset();
     toggleModal();
 });
 
 /**
- * Backup e Restauração de Dados (JSON)
+ * Backup JSON
  */
 function exportBackup() {
-    if (accesses.length === 0) return alert('Sem dados para exportar.');
+    if (accesses.length === 0) return alert('Sem dados.');
     const blob = new Blob([JSON.stringify(accesses, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -119,20 +177,18 @@ function importJSON(e) {
                 toggleImportModal();
                 showToast('RESTAURADO!');
             }
-        } catch (err) { alert('Erro ao processar o arquivo JSON.'); }
+        } catch (err) { alert('Erro no arquivo JSON.'); }
     };
     reader.readAsText(file);
 }
 
 /**
- * Prancheta Inteligente - Importação em Massa
- * Diferencia "cnpj/cpf:" de "cpf:" usando expressões regulares avançadas.
+ * Prancheta Inteligente
  */
 function processBulkImport() {
     const text = document.getElementById('bulkImportArea').value;
     if (!text.trim()) return;
 
-    // Divide o texto em blocos baseados nos rótulos iniciais
     const blocks = text.split(/(?=cnpj\/cpf:)|(?=empresa:)/i).filter(b => b.trim() !== "");
     
     let addedCount = 0;
@@ -140,13 +196,11 @@ function processBulkImport() {
         const lines = block.split('\n').map(l => l.trim()).filter(l => l !== "");
         
         const extract = (label) => {
-            // Regex com Lookbehind Negativo (?<!\/) para garantir que "cpf" não capture "cnpj/cpf"
             const regex = new RegExp(`(?:^|\\n)(?<!\\/)${label}\\s*[:\\-]?\\s*(.*)`, 'i');
             const match = block.match(regex);
             return match ? match[1].trim() : "";
         };
 
-        // Identifica onde termina a senha para capturar o resto como Observações
         const senhaLineIdx = lines.findIndex(l => l.toLowerCase().includes('senha:'));
         let obsValue = "";
         if (senhaLineIdx !== -1 && lines.length > senhaLineIdx + 1) {
@@ -165,7 +219,6 @@ function processBulkImport() {
             date: new Date().toLocaleDateString()
         };
 
-        // Critério mínimo para adicionar um registo
         if (entry.empresa || entry.senha) {
             accesses.push(entry);
             addedCount++;
@@ -178,13 +231,11 @@ function processBulkImport() {
         document.getElementById('bulkImportArea').value = "";
         toggleImportModal();
         showToast(`${addedCount} IMPORTADOS!`);
-    } else {
-        alert('Formato de texto não reconhecido. Certifique-se de usar os nomes de campos corretos.');
     }
 }
 
 /**
- * Interface - Visualização de Detalhes Completa
+ * Janela de Detalhes
  */
 function showDetails(id) {
     const item = accesses.find(a => a.id === id);
@@ -202,7 +253,12 @@ function showDetails(id) {
         <div class="modal-content max-w-xl">
             <div class="modal-header">
                 <h2 class="text-xl font-black text-indigo-900 uppercase truncate pr-4">${item.empresa || 'DETALHES'}</h2>
-                <button onclick="closeDetails()" class="close-btn"><i data-lucide="x"></i></button>
+                <div class="flex items-center gap-4">
+                    <button onclick="editEntry(${item.id})" class="text-indigo-600 hover:text-indigo-800 font-black text-[10px] uppercase tracking-widest flex items-center gap-1">
+                        <i data-lucide="edit-3" class="w-3 h-3"></i> Editar
+                    </button>
+                    <button onclick="closeDetails()" class="close-btn"><i data-lucide="x"></i></button>
+                </div>
             </div>
             <div class="p-8 space-y-4 max-h-[70vh] overflow-y-auto custom-scrollbar bg-white">
                 ${renderField('CNPJ / CPF DA EMPRESA:', item.cnpj_cpf)}
@@ -220,7 +276,7 @@ function showDetails(id) {
                 ` : ''}
             </div>
             <div class="p-6 bg-slate-50 border-t flex justify-between items-center text-[10px] font-black text-slate-400">
-                <span>DATA DE REGISTRO: ${item.date}</span>
+                <span>CADASTRADO: ${item.date}</span>
                 <button onclick="deleteEntry(${item.id})" class="text-red-400 hover:text-red-600 tracking-tighter uppercase font-black">Eliminar Registro</button>
             </div>
         </div>
@@ -230,9 +286,6 @@ function showDetails(id) {
     lucide.createIcons();
 }
 
-/**
- * Função Auxiliar para Renderizar Campos no Modal de Detalhes
- */
 function renderField(label, value, isPass = false) {
     const val = value && value.trim() !== "" ? value : "---";
     return `
@@ -241,7 +294,7 @@ function renderField(label, value, isPass = false) {
                 <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest block">${label}</span>
                 <span class="text-sm font-bold text-slate-800 ${isPass ? 'font-mono tracking-widest' : ''}">${val}</span>
             </div>
-            <button onclick="copyToClipboard('${val}')" class="copy-btn" title="Copiar Campo">
+            <button onclick="copyToClipboard('${val}')" class="copy-btn">
                 <i data-lucide="copy" class="w-4 h-4"></i>
             </button>
         </div>
@@ -254,12 +307,11 @@ function closeDetails() {
 }
 
 /**
- * Render Principal - Grade de Cards (ORDEM ALFABÉTICA AUTOMÁTICA)
+ * Render Principal
  */
 function render() {
     const query = searchBar.value.toLowerCase();
     
-    // Filtragem por pesquisa e Ordenação de A-Z pelo nome da Empresa
     const filtered = accesses
         .filter(a => 
             (a.empresa || "").toLowerCase().includes(query) ||
@@ -294,7 +346,7 @@ function render() {
                     
                     <div class="flex flex-col gap-1">
                         <div class="flex items-center text-[10px] text-slate-400 font-black uppercase tracking-widest">
-                            <i data-lucide="file-text" class="w-3 h-3 mr-1.5 text-indigo-400"></i> CNPJ: ${a.cnpj_cpf || '---'}
+                            <i data-lucide="file-text" class="w-3 h-3 mr-1.5 text-indigo-400"></i> DOC: ${a.cnpj_cpf || '---'}
                         </div>
                         <div class="flex items-center text-[10px] text-slate-400 font-black uppercase tracking-widest">
                             <i data-lucide="map-pin" class="w-3 h-3 mr-1.5 text-indigo-400"></i> UNID: ${a.unidade || 'N/A'}
@@ -312,5 +364,4 @@ function render() {
     lucide.createIcons();
 }
 
-// Inicialização Automática
 window.onload = render;
