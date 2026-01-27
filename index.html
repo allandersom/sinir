@@ -28,7 +28,7 @@
                 <button onclick="toggleImportModal()" class="btn-util">
                     <i data-lucide="clipboard-list"></i> PRANCHETA
                 </button>
-                <button onclick="toggleModal()" class="btn-primary">
+                <button onclick="prepareNewEntry()" class="btn-primary">
                     <i data-lucide="plus"></i> NOVO ACESSO
                 </button>
             </div>
@@ -55,11 +55,11 @@
         </div>
     </div>
 
-    <!-- Modal Novo Cadastro -->
+    <!-- Modal Cadastro / Edição -->
     <div id="accessModal" class="modal-overlay hidden">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 class="text-xl font-black uppercase italic">Adicionar Cadastro</h2>
+                <h2 id="modalTitle" class="text-xl font-black uppercase italic">Adicionar Cadastro</h2>
                 <button onclick="toggleModal()" class="close-btn"><i data-lucide="x"></i></button>
             </div>
             <form id="accessForm" class="p-8 space-y-4">
@@ -95,7 +95,9 @@
                 </div>
                 <div class="flex gap-4 pt-6">
                     <button type="button" onclick="toggleModal()" class="btn-secondary w-full">CANCELAR</button>
-                    <button type="submit" class="btn-primary w-full justify-center">SALVAR REGISTRO</button>
+                    <button type="submit" class="btn-primary w-full justify-center">
+                        <span id="saveBtnText">SALVAR REGISTRO</span>
+                    </button>
                 </div>
             </form>
         </div>
