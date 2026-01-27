@@ -1,36 +1,53 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
-body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
+:root {
+    --primary: #4f46e5;
+    --primary-hover: #4338ca;
+    --bg: #f8fafc;
+    --card-bg: #ffffff;
+}
 
-/* Botões Customizados */
-.btn-primary { @apply bg-indigo-700 hover:bg-indigo-900 text-white px-8 py-4 rounded-[1.25rem] font-black text-xs transition-all flex items-center gap-2 shadow-lg shadow-indigo-200 active:scale-95; }
-.btn-util { @apply bg-white border-2 border-slate-200 text-slate-700 px-6 py-4 rounded-[1.25rem] font-black text-xs hover:bg-slate-50 transition-all flex items-center gap-2 active:scale-95; }
-.btn-secondary { @apply py-4 border-2 border-slate-200 rounded-[1.25rem] font-black text-xs text-slate-400 hover:bg-slate-50 transition-all; }
+body {
+    background-color: var(--bg);
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
 
-/* Inputs e Pesquisa */
-.search-input { @apply w-full pl-16 pr-8 py-6 bg-white border-2 border-slate-100 rounded-[2rem] shadow-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-400 outline-none transition-all text-lg font-semibold placeholder:text-slate-300; }
-.label { @apply block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1; }
-.input { @apply w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-[1.25rem] outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all font-bold text-slate-700; }
+/* Botões */
+.btn-primary { @apply bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-2xl font-black text-xs transition-all flex items-center gap-2 shadow-xl shadow-indigo-100 hover:shadow-indigo-200 active:scale-95 uppercase tracking-widest; }
+.btn-secondary { @apply bg-white border border-slate-200 text-slate-600 px-6 py-4 rounded-2xl font-bold text-xs hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm active:scale-95 uppercase tracking-widest; }
+.btn-cancel { @apply py-4 border-2 border-slate-100 rounded-2xl font-black text-xs text-slate-400 hover:bg-slate-50 transition-all tracking-widest; }
+.btn-save { @apply py-4 bg-indigo-600 text-white rounded-2xl font-black text-xs hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 active:scale-95 tracking-widest; }
+.btn-import { @apply w-full py-5 bg-indigo-500 text-white rounded-[1.5rem] font-black uppercase tracking-[0.2em] hover:bg-indigo-600 shadow-2xl shadow-indigo-500/20 transition-all active:scale-95; }
 
-/* Modais */
-.modal-overlay { @apply fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center p-4; }
-.modal-content { @apply bg-white w-full max-w-lg rounded-[3rem] shadow-2xl overflow-hidden; animation: zoomPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
-@keyframes zoomPop { from { opacity: 0; transform: scale(0.9) translateY(30px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-.modal-header { @apply p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50; }
-.close-btn { @apply text-slate-300 hover:text-red-500 transition-colors p-2 hover:bg-red-50 rounded-full; }
+/* Inputs */
+.search-input { @apply w-full pl-16 pr-8 py-7 bg-white border-2 border-slate-100 rounded-[2.5rem] shadow-xl shadow-slate-200/40 focus:ring-8 focus:ring-indigo-500/5 focus:border-indigo-500 outline-none transition-all text-xl font-bold placeholder:text-slate-300; }
+.label { @apply block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-2; }
+.input { @apply w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-500/5 focus:bg-white focus:border-indigo-500 transition-all font-bold text-slate-700 placeholder:text-slate-300; }
 
-/* Cards de Acesso */
-.access-card { @apply bg-white rounded-[2.5rem] border-2 border-slate-100 shadow-sm hover:shadow-2xl hover:border-indigo-200 transition-all overflow-hidden flex flex-col hover:-translate-y-2 cursor-pointer active:scale-[0.98]; }
-.badge { @apply bg-slate-200 text-slate-500 px-5 py-2 rounded-full text-[10px] font-black tracking-widest shadow-inner; }
+/* Modais Glassmorphism */
+.modal-overlay { @apply fixed inset-0 bg-slate-900/60 backdrop-blur-xl z-50 flex items-center justify-center p-4; animation: fadeIn 0.3s ease-out; }
+.modal-content { @apply bg-white/95 w-full max-w-xl rounded-[3.5rem] shadow-2xl border border-white/50 overflow-hidden; animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+.modal-header { @apply p-10 border-b border-slate-100 flex justify-between items-center; }
 
-/* Janela de Detalhes */
-.detail-box { @apply bg-slate-50 p-4 rounded-[1.5rem] border-2 border-slate-100 flex justify-between items-center group hover:bg-white hover:border-indigo-400 transition-all; }
-.copy-btn { @apply bg-white p-3 rounded-xl shadow-sm text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all active:scale-90 opacity-0 group-hover:opacity-100; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(40px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
-/* Notificação (Toast) */
-.toast { @apply fixed bottom-12 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-10 py-4 rounded-[1.5rem] shadow-2xl z-[100] font-black uppercase tracking-[0.3em] text-[10px] animate-bounce; }
+.close-btn { @apply text-slate-400 hover:text-red-500 transition-all p-3 hover:bg-red-50 rounded-2xl; }
 
-/* Barra de Rolagem (Scrollbar) */
-::-webkit-scrollbar { width: 10px; }
-::-webkit-scrollbar-track { background: #f1f5f9; }
-::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 20px; border: 3px solid #f1f5f9; }
+/* Cards Premium */
+.access-card { @apply bg-white rounded-[3rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-indigo-500/10 transition-all overflow-hidden flex flex-col relative group cursor-pointer border-b-[6px] border-b-transparent hover:border-b-indigo-500 active:scale-[0.98]; }
+.badge { @apply bg-indigo-600 text-white px-6 py-2 rounded-full text-[10px] font-black tracking-[0.2em] shadow-lg shadow-indigo-100; }
+
+/* Detalhes Estilizados */
+.detail-box { @apply bg-slate-50 p-4 rounded-[1.5rem] border border-slate-100 flex justify-between items-center hover:bg-white hover:border-indigo-500 hover:shadow-lg hover:shadow-indigo-500/5 transition-all group/box; }
+.copy-btn { @apply bg-white p-3 rounded-xl shadow-sm text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all active:scale-90 opacity-0 group-hover/box:opacity-100; }
+
+/* Toast */
+.toast { @apply fixed bottom-12 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-10 py-5 rounded-[2rem] shadow-2xl z-[100] font-black uppercase tracking-[0.4em] text-[10px] animate-bounce; }
+
+/* Custom Scroll */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 20px; }
+::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
