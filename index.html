@@ -63,19 +63,19 @@
 
     <!-- Modal Cadastro / Edição -->
     <div id="accessModal" class="modal-overlay hidden">
-        <div class="modal-content h-full max-h-[90vh]">
-            <div class="modal-header">
+        <div class="modal-content flex flex-col h-[90vh] max-h-[850px]">
+            <div class="modal-header flex-none">
                 <div>
                     <h2 id="modalTitle" class="text-2xl font-black uppercase italic text-slate-800">Novo Cadastro</h2>
                 </div>
                 <button onclick="toggleModal()" class="close-btn"><i data-lucide="x"></i></button>
             </div>
-            <form id="accessForm" class="flex flex-col flex-1 overflow-hidden">
+            <form id="accessForm" class="flex flex-col flex-1 overflow-hidden" onsubmit="return false;">
                 <div class="p-10 space-y-5 overflow-y-auto custom-scrollbar flex-1">
                     <div class="grid grid-cols-2 gap-5">
                         <div class="col-span-2">
                             <label class="label">Nome da Empresa *</label>
-                            <input type="text" id="empresa" required class="input" placeholder="Digite o nome">
+                            <input type="text" id="empresa" required class="input">
                         </div>
                         <div>
                             <label class="label">CNPJ ou CPF (Empresa)</label>
@@ -103,9 +103,9 @@
                         </div>
                     </div>
                 </div>
-                <div class="p-8 border-t bg-slate-50 flex gap-4 shrink-0">
-                    <button type="button" onclick="toggleModal()" class="btn-cancel w-full">DESCARTAR</button>
-                    <button type="submit" class="btn-save w-full">
+                <div class="p-8 border-t bg-slate-50 flex gap-4 flex-none">
+                    <button type="button" onclick="toggleModal()" class="btn-cancel w-full font-black">DESCARTAR</button>
+                    <button type="submit" id="saveManualBtn" class="btn-save w-full font-black">
                         <span id="saveBtnText">SALVAR DADOS</span>
                     </button>
                 </div>
@@ -113,35 +113,33 @@
         </div>
     </div>
 
-    <!-- Modal Prancheta de Importação (Botão Fixo) -->
+    <!-- Modal Prancheta Inteligente (CORRIGIDO PARA O RODAPÉ APARECER) -->
     <div id="importModal" class="modal-overlay hidden">
-        <div class="modal-content max-w-2xl bg-slate-900 border-indigo-500/30 h-full max-h-[85vh]">
-            <div class="modal-header bg-slate-800/50 border-slate-700 shrink-0">
+        <div class="modal-content max-w-2xl bg-slate-900 border-indigo-500/30 flex flex-col h-[85vh] max-h-[800px]">
+            <div class="modal-header bg-slate-800/50 border-slate-700 flex-none">
                 <h2 class="text-xl font-black uppercase text-white tracking-widest flex items-center gap-3">
                     <i data-lucide="terminal" class="text-indigo-400"></i> Prancheta de Massa
                 </h2>
                 <button onclick="toggleImportModal()" class="close-btn text-slate-500 hover:text-white"><i data-lucide="x"></i></button>
             </div>
             
-            <div class="flex flex-col flex-1 overflow-hidden">
-                <div class="p-8 md:p-10 space-y-6 overflow-y-auto custom-scrollbar flex-1">
-                    <button onclick="document.getElementById('jsonFileInput').click()" class="w-full py-4 border-2 border-dashed border-slate-700 rounded-2xl text-slate-400 font-bold hover:border-indigo-500 hover:text-indigo-400 transition-all cursor-pointer">
-                        Restaurar via Arquivo JSON
-                    </button>
-                    <input type="file" id="jsonFileInput" accept=".json" class="hidden" onchange="importJSON(event)">
-                    
-                    <div class="space-y-3">
-                        <label class="text-xs font-black text-indigo-400 uppercase tracking-widest">Colar Blocos de Texto Abaixo</label>
-                        <textarea id="bulkImportArea" rows="12" class="w-full p-6 bg-slate-800 text-indigo-100 rounded-[2rem] text-xs font-mono border-2 border-slate-700 focus:border-indigo-500 outline-none transition-all shadow-inner" placeholder="cnpj/cpf: ...&#10;codigo unidade: ...&#10;empresa: ...&#10;usuario: ...&#10;cpf: ...&#10;senha: ...&#10;OBS AQUI"></textarea>
-                    </div>
+            <div class="p-8 md:p-10 space-y-6 overflow-y-auto custom-scrollbar flex-1">
+                <button onclick="document.getElementById('jsonFileInput').click()" class="w-full py-4 border-2 border-dashed border-slate-700 rounded-2xl text-slate-400 font-bold hover:border-indigo-500 hover:text-indigo-400 transition-all">
+                    Selecionar arquivo .JSON para restaurar
+                </button>
+                <input type="file" id="jsonFileInput" accept=".json" class="hidden" onchange="importJSON(event)">
+                
+                <div class="space-y-3">
+                    <label class="text-xs font-black text-indigo-400 uppercase tracking-widest">Colar Blocos de Texto Abaixo</label>
+                    <textarea id="bulkImportArea" rows="12" class="w-full p-6 bg-slate-800 text-indigo-100 rounded-[2rem] text-xs font-mono border-2 border-slate-700 focus:border-indigo-500 outline-none transition-all shadow-inner" placeholder="cnpj/cpf: ...&#10;codigo unidade: ...&#10;empresa: ...&#10;usuario: ...&#10;cpf: ...&#10;senha: ...&#10;OBS AQUI"></textarea>
                 </div>
+            </div>
 
-                <!-- RODAPÉ FIXO PARA O BOTÃO DE SALVAR -->
-                <div class="p-8 border-t border-slate-800 bg-slate-900 shrink-0">
-                    <button onclick="processBulkImport()" class="btn-import">
-                        SALVAR TODOS OS ACESSOS COLADOS
-                    </button>
-                </div>
+            <!-- RODAPÉ FIXO DO MODAL DE IMPORTAÇÃO -->
+            <div class="p-8 border-t border-slate-800 bg-slate-900 flex-none">
+                <button onclick="processBulkImport()" class="btn-import font-black uppercase tracking-widest">
+                    SALVAR TODOS OS ACESSOS COLADOS
+                </button>
             </div>
         </div>
     </div>
