@@ -10,7 +10,7 @@ body {
     font-family: 'Inter', sans-serif;
 }
 
-/* Cursor de Mãozinha em todos os elementos clicáveis */
+/* Cursor Pointer Global para Elementos Clicáveis */
 button, 
 .access-card, 
 .copy-btn, 
@@ -32,7 +32,7 @@ input[type="file"],
 .label { @apply block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-2; }
 .input { @apply w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-indigo-500/5 focus:bg-white focus:border-indigo-500 transition-all font-bold text-slate-700; }
 
-/* Modais */
+/* Modais Glassmorphism */
 .modal-overlay { @apply fixed inset-0 bg-slate-900/60 backdrop-blur-xl z-50 flex items-center justify-center p-4; animation: fadeIn 0.2s ease-out; }
 .modal-content { @apply bg-white/95 w-full max-w-xl rounded-[3rem] shadow-2xl border border-white/50 overflow-hidden relative flex flex-col; animation: slideUp 0.3s ease-out; }
 .modal-header { @apply p-8 border-b border-slate-100 flex justify-between items-center; }
@@ -57,3 +57,4 @@ input[type="file"],
 .custom-scrollbar::-webkit-scrollbar { width: 6px; }
 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
 .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 20px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
