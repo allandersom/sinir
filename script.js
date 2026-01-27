@@ -1,17 +1,22 @@
-// Inicialização de Ícones
+/**
+ * ACESSO DO SINIR BY ALLAN
+ * Sistema de gestão de credenciais com armazenamento local e importação em massa.
+ */
+
+// Inicialização de Ícones (Biblioteca Lucide)
 lucide.createIcons();
 
-// Dados Locais
+// Dados Locais - Tenta carregar do LocalStorage ou inicia um array vazio
 let accesses = JSON.parse(localStorage.getItem('sinir_by_allan_final')) || [];
 
-// Elementos Principais
+// Elementos Principais da Interface
 const accessGrid = document.getElementById('accessGrid');
 const searchBar = document.getElementById('searchBar');
 const totalCountLabel = document.getElementById('totalCount');
 const toast = document.getElementById('toast');
 
 /**
- * Interface - Modais
+ * Interface - Controlo de Modais
  */
 function toggleModal() {
     document.getElementById('accessModal').classList.toggle('hidden');
@@ -25,11 +30,12 @@ function toggleImportModal() {
 }
 
 /**
- * utilitários - Cópia e Notificação
+ * Utilitários - Sistema de Cópia e Notificação
  */
 function showToast(msg) {
     toast.textContent = msg || 'COPIADO!';
     toast.classList.remove('hidden');
+    // Remove a notificação após 2 segundos
     setTimeout(() => toast.classList.add('hidden'), 2000);
 }
 
@@ -45,14 +51,16 @@ function copyToClipboard(text) {
 }
 
 /**
- * Persistência
+ * Persistência e Gestão de Dados
  */
 function saveData() {
     localStorage.setItem('sinir_by_allan_final', JSON.stringify(accesses));
 }
 
 function deleteEntry(id, event) {
+    // Impede que o clique no botão abra o modal de detalhes
     if (event) event.stopPropagation();
+    
     if (confirm('REMOVER ESTE REGISTRO PERMANENTEMENTE?')) {
         accesses = accesses.filter(a => a.id !== id);
         saveData();
@@ -62,7 +70,7 @@ function deleteEntry(id, event) {
 }
 
 /**
- * Formulário Manual
+ * Processamento de Formulário Manual
  */
 document.getElementById('accessForm').addEventListener('submit', (e) => {
     e.preventDefault();
@@ -85,10 +93,10 @@ document.getElementById('accessForm').addEventListener('submit', (e) => {
 });
 
 /**
- * Backup JSON
+ * Backup e Restauração de Dados (JSON)
  */
 function exportBackup() {
-    if (accesses.length === 0) return alert('Sem dados.');
+    if (accesses.length === 0) return alert('Sem dados para exportar.');
     const blob = new Blob([JSON.stringify(accesses, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -111,19 +119,20 @@ function importJSON(e) {
                 toggleImportModal();
                 showToast('RESTAURADO!');
             }
-        } catch (err) { alert('Erro no JSON.'); }
+        } catch (err) { alert('Erro ao processar o arquivo JSON.'); }
     };
     reader.readAsText(file);
 }
 
 /**
  * Prancheta Inteligente - Importação em Massa
+ * Diferencia "cnpj/cpf:" de "cpf:" usando expressões regulares avançadas.
  */
 function processBulkImport() {
     const text = document.getElementById('bulkImportArea').value;
     if (!text.trim()) return;
 
-    // Split por Empresa ou CNPJ/CPF inicial
+    // Divide o texto em blocos baseados nos rótulos iniciais
     const blocks = text.split(/(?=cnpj\/cpf:)|(?=empresa:)/i).filter(b => b.trim() !== "");
     
     let addedCount = 0;
@@ -131,13 +140,13 @@ function processBulkImport() {
         const lines = block.split('\n').map(l => l.trim()).filter(l => l !== "");
         
         const extract = (label) => {
-            // Regex refinada com Lookbehind Negativo (?<!\/) para não confundir 'cpf:' com 'cnpj/cpf:'
+            // Regex com Lookbehind Negativo (?<!\/) para garantir que "cpf" não capture "cnpj/cpf"
             const regex = new RegExp(`(?:^|\\n)(?<!\\/)${label}\\s*[:\\-]?\\s*(.*)`, 'i');
             const match = block.match(regex);
             return match ? match[1].trim() : "";
         };
 
-        // Identifica onde está a senha para pegar o que sobrou como OBS
+        // Identifica onde termina a senha para capturar o resto como Observações
         const senhaLineIdx = lines.findIndex(l => l.toLowerCase().includes('senha:'));
         let obsValue = "";
         if (senhaLineIdx !== -1 && lines.length > senhaLineIdx + 1) {
@@ -156,6 +165,7 @@ function processBulkImport() {
             date: new Date().toLocaleDateString()
         };
 
+        // Critério mínimo para adicionar um registo
         if (entry.empresa || entry.senha) {
             accesses.push(entry);
             addedCount++;
@@ -169,12 +179,12 @@ function processBulkImport() {
         toggleImportModal();
         showToast(`${addedCount} IMPORTADOS!`);
     } else {
-        alert('Formato de texto não reconhecido.');
+        alert('Formato de texto não reconhecido. Certifique-se de usar os nomes de campos corretos.');
     }
 }
 
 /**
- * Janela de Detalhes
+ * Interface - Visualização de Detalhes Completa
  */
 function showDetails(id) {
     const item = accesses.find(a => a.id === id);
@@ -204,14 +214,14 @@ function showDetails(id) {
                 
                 ${item.obs ? `
                     <div class="bg-amber-50 p-5 rounded-[2rem] border-2 border-amber-100 mt-6">
-                        <span class="text-[9px] font-black text-amber-500 uppercase tracking-widest">Observações em Negrito</span>
+                        <span class="text-[9px] font-black text-amber-500 uppercase tracking-widest">Observações</span>
                         <p class="text-sm font-black text-slate-800 mt-2 leading-tight uppercase italic">"${item.obs}"</p>
                     </div>
                 ` : ''}
             </div>
             <div class="p-6 bg-slate-50 border-t flex justify-between items-center text-[10px] font-black text-slate-400">
-                <span>CADASTRADO: ${item.date}</span>
-                <button onclick="deleteEntry(${item.id})" class="text-red-400 hover:text-red-600 tracking-tighter uppercase">Excluir Permanente</button>
+                <span>DATA DE REGISTRO: ${item.date}</span>
+                <button onclick="deleteEntry(${item.id})" class="text-red-400 hover:text-red-600 tracking-tighter uppercase font-black">Eliminar Registro</button>
             </div>
         </div>
     `;
@@ -220,6 +230,9 @@ function showDetails(id) {
     lucide.createIcons();
 }
 
+/**
+ * Função Auxiliar para Renderizar Campos no Modal de Detalhes
+ */
 function renderField(label, value, isPass = false) {
     const val = value && value.trim() !== "" ? value : "---";
     return `
@@ -228,7 +241,7 @@ function renderField(label, value, isPass = false) {
                 <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest block">${label}</span>
                 <span class="text-sm font-bold text-slate-800 ${isPass ? 'font-mono tracking-widest' : ''}">${val}</span>
             </div>
-            <button onclick="copyToClipboard('${val}')" class="copy-btn">
+            <button onclick="copyToClipboard('${val}')" class="copy-btn" title="Copiar Campo">
                 <i data-lucide="copy" class="w-4 h-4"></i>
             </button>
         </div>
@@ -241,12 +254,12 @@ function closeDetails() {
 }
 
 /**
- * Render Principal (ORDEM ALFABÉTICA)
+ * Render Principal - Grade de Cards (ORDEM ALFABÉTICA AUTOMÁTICA)
  */
 function render() {
     const query = searchBar.value.toLowerCase();
     
-    // Filtro e Ordenação A-Z
+    // Filtragem por pesquisa e Ordenação de A-Z pelo nome da Empresa
     const filtered = accesses
         .filter(a => 
             (a.empresa || "").toLowerCase().includes(query) ||
@@ -281,10 +294,10 @@ function render() {
                     
                     <div class="flex flex-col gap-1">
                         <div class="flex items-center text-[10px] text-slate-400 font-black uppercase tracking-widest">
-                            <i data-lucide="file-text" class="w-3 h-3 mr-1.5"></i> DOC: ${a.cnpj_cpf || '---'}
+                            <i data-lucide="file-text" class="w-3 h-3 mr-1.5 text-indigo-400"></i> CNPJ: ${a.cnpj_cpf || '---'}
                         </div>
                         <div class="flex items-center text-[10px] text-slate-400 font-black uppercase tracking-widest">
-                            <i data-lucide="map-pin" class="w-3 h-3 mr-1.5"></i> UNID: ${a.unidade || 'N/A'}
+                            <i data-lucide="map-pin" class="w-3 h-3 mr-1.5 text-indigo-400"></i> UNID: ${a.unidade || 'N/A'}
                         </div>
                     </div>
                     
@@ -299,5 +312,5 @@ function render() {
     lucide.createIcons();
 }
 
-// Iniciar sistema
+// Inicialização Automática
 window.onload = render;
