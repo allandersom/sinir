@@ -14,6 +14,9 @@ const totalCountLabel = document.getElementById('totalCount');
 const toast = document.getElementById('toast');
 const accessForm = document.getElementById('accessForm');
 
+/**
+ * Interface - Modais
+ */
 function toggleModal() {
     const modal = document.getElementById('accessModal');
     modal.classList.toggle('hidden');
@@ -27,6 +30,9 @@ function toggleImportModal() {
     document.getElementById('importModal').classList.toggle('hidden');
 }
 
+/**
+ * Prepara o modal para um NOVO cadastro
+ */
 function prepareNewEntry() {
     editingId = null;
     document.getElementById('modalTitle').textContent = "Novo Registro";
@@ -35,6 +41,9 @@ function prepareNewEntry() {
     toggleModal();
 }
 
+/**
+ * Prepara o modal para EDITAR
+ */
 function editEntry(id) {
     const item = accesses.find(a => a.id === id);
     if (!item) return;
@@ -55,6 +64,9 @@ function editEntry(id) {
     toggleModal();
 }
 
+/**
+ * Utilitários - Cópia e Notificação
+ */
 function showToast(msg) {
     toast.textContent = msg || 'COPIADO!';
     toast.classList.remove('hidden');
@@ -72,6 +84,9 @@ function copyToClipboard(text) {
     showToast();
 }
 
+/**
+ * Gestão de Dados
+ */
 function saveData() {
     localStorage.setItem('sinir_by_allan_final', JSON.stringify(accesses));
 }
@@ -86,6 +101,9 @@ function deleteEntry(id, event) {
     }
 }
 
+/**
+ * Submissão de Formulário Manual
+ */
 accessForm.addEventListener('submit', (e) => {
     e.preventDefault();
 
@@ -122,8 +140,11 @@ accessForm.addEventListener('submit', (e) => {
     toggleModal();
 });
 
+/**
+ * BACKUP: Exporta para arquivo JSON
+ */
 function exportBackup() {
-    if (accesses.length === 0) return alert('Sem dados.');
+    if (accesses.length === 0) return alert('Sem dados para exportar.');
     const blob = new Blob([JSON.stringify(accesses, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -132,34 +153,43 @@ function exportBackup() {
     a.click();
 }
 
+/**
+ * RESTAURAR: Importa de arquivo JSON
+ */
 function importJSON(e) {
     const file = e.target.files[0];
     if (!file) return;
+
     const reader = new FileReader();
     reader.onload = (ev) => {
         try {
             const data = JSON.parse(ev.target.result);
             if (Array.isArray(data)) {
-                accesses = [...accesses, ...data];
-                saveData();
-                render();
-                toggleImportModal();
-                showToast('RESTAURADO!');
+                if (confirm(`Deseja restaurar ${data.length} registros? Os dados atuais serão mantidos e os do backup adicionados.`)) {
+                    accesses = [...accesses, ...data];
+                    saveData();
+                    render();
+                    showToast('BACKUP RESTAURADO!');
+                }
+            } else {
+                alert('Arquivo JSON inválido.');
             }
-        } catch (err) { alert('Erro no arquivo JSON.'); }
+        } catch (err) {
+            alert('Erro ao ler o arquivo JSON.');
+        }
+        // Limpa o input para permitir selecionar o mesmo arquivo de novo
+        e.target.value = '';
     };
     reader.readAsText(file);
 }
 
 /**
- * Função de Processamento de Importação em Massa (Prancheta)
- * Corrigida para mapear exatamente os campos CNPJ, Unidade, Empresa, Usuário, CPF e Senha.
+ * PRANCHETA: Processamento de Texto em Massa
  */
 function processBulkImport() {
     const text = document.getElementById('bulkImportArea').value;
     if (!text.trim()) return;
 
-    // Divide em blocos caso o usuário cole vários seguidos (iniciando por CNPJ ou Empresa)
     const blocks = text.split(/(?=cnpj:)|(?=empresa:)|(?=cnpj\/cpf:)/i).filter(b => b.trim() !== "");
     
     let addedCount = 0;
@@ -171,7 +201,6 @@ function processBulkImport() {
             cnpj_cpf: "", unidade: "", empresa: "", usuario: "", cpf_acesso: "", senha: "", obs: ""
         };
 
-        // Mapeamento linha a linha baseado nos rótulos específicos
         lines.forEach(line => {
             const lower = line.toLowerCase();
             const val = line.split(/[:\-](.+)/)[1]?.trim() || "";
@@ -185,13 +214,11 @@ function processBulkImport() {
             else if (lower.startsWith('senha:')) entry.senha = val;
         });
 
-        // Captura o que sobrou após a linha da senha como Observação
         const senhaLineIdx = lines.findIndex(l => l.toLowerCase().startsWith('senha:'));
         if (senhaLineIdx !== -1 && lines.length > senhaLineIdx + 1) {
             entry.obs = lines.slice(senhaLineIdx + 1).join(' ').trim();
         }
 
-        // Critério para considerar o registro válido
         if (entry.empresa || entry.senha) {
             accesses.push(entry);
             addedCount++;
@@ -203,12 +230,15 @@ function processBulkImport() {
         render();
         document.getElementById('bulkImportArea').value = "";
         toggleImportModal();
-        showToast(`${addedCount} ACESSOS IMPORTADOS!`);
+        showToast(`${addedCount} IMPORTADOS!`);
     } else {
-        alert('Formato não reconhecido. Certifique-se de usar "Campo: Valor"');
+        alert('Formato não reconhecido.');
     }
 }
 
+/**
+ * Visualização Detalhada
+ */
 function showDetails(id) {
     const item = accesses.find(a => a.id === id);
     if (!item) return;
@@ -266,7 +296,7 @@ function renderField(label, value) {
         <div class="detail-box">
             <div class="truncate mr-4">
                 <span class="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-1">${label}</span>
-                <span class="text-sm font-bold text-slate-800">${val}</span>
+                <span class="text-sm font-bold text-slate-800 uppercase">${val}</span>
             </div>
             <button onclick="copyToClipboard('${val}')" class="copy-btn">
                 <i data-lucide="copy" class="w-4 h-4"></i>
@@ -280,6 +310,9 @@ function closeDetails() {
     if (m) m.classList.add('hidden');
 }
 
+/**
+ * Render Principal
+ */
 function render() {
     const query = searchBar.value.toLowerCase();
     
@@ -315,7 +348,7 @@ function render() {
                     
                     <div class="flex flex-col gap-2 mt-4">
                         <div class="flex items-center text-[10px] text-slate-400 font-black uppercase tracking-widest">
-                            <i data-lucide="file-text" class="w-3 h-3 mr-2"></i> ${a.cnpj_cpf || '---'}
+                            <i data-lucide="file-text" class="w-3 h-3 mr-2"></i> CNPJ: ${a.cnpj_cpf || '---'}
                         </div>
                     </div>
                     
