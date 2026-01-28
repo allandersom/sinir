@@ -29,14 +29,22 @@
                 </p>
             </div>
             <div class="flex flex-wrap gap-3 z-10">
-                <button onclick="exportBackup()" class="btn-secondary group">
-                    <i data-lucide="download-cloud" class="w-4 h-4 group-hover:bounce"></i> BACKUP
-                </button>
+                <!-- BOTÕES DE BACKUP E RESTAURAR NO TOPO -->
+                <div class="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
+                    <button onclick="exportBackup()" class="btn-top group" title="Baixar Backup">
+                        <i data-lucide="download-cloud" class="w-4 h-4"></i> BACKUP
+                    </button>
+                    <button onclick="document.getElementById('jsonFileInputHeader').click()" class="btn-top group" title="Restaurar de arquivo JSON">
+                        <i data-lucide="upload-cloud" class="w-4 h-4"></i> RESTAURAR
+                    </button>
+                </div>
+                <input type="file" id="jsonFileInputHeader" accept=".json" class="hidden" onchange="importJSON(event)">
+                
                 <button onclick="toggleImportModal()" class="btn-secondary group">
-                    <i data-lucide="file-up" class="w-4 h-4"></i> PRANCHETA
+                    <i data-lucide="file-text" class="w-4 h-4"></i> PRANCHETA
                 </button>
                 <button onclick="prepareNewEntry()" class="btn-primary group">
-                    <i data-lucide="plus-circle" class="w-5 h-5 group-hover:rotate-90 transition-transform"></i> NOVO ACESSO
+                    <i data-lucide="plus-circle" class="w-5 h-5"></i> NOVO ACESSO
                 </button>
             </div>
         </header>
@@ -48,7 +56,7 @@
         </div>
 
         <div class="mb-8 flex items-center justify-between px-4">
-            <span id="totalCount" class="badge uppercase">TOTAL: 0 REGISTROS</span>
+            <span id="totalCount" class="badge uppercase tracking-widest">TOTAL: 0 REGISTROS</span>
         </div>
 
         <!-- Grid -->
@@ -63,8 +71,8 @@
 
     <!-- Modal Cadastro / Edição -->
     <div id="accessModal" class="modal-overlay hidden">
-        <div class="modal-content flex flex-col h-[90vh] max-h-[850px]">
-            <div class="modal-header flex-none">
+        <div class="modal-content h-full max-h-[90vh]">
+            <div class="modal-header">
                 <div>
                     <h2 id="modalTitle" class="text-2xl font-black uppercase italic text-slate-800">Novo Cadastro</h2>
                 </div>
@@ -95,7 +103,7 @@
                         </div>
                         <div class="col-span-2">
                             <label class="label">Senha (Sempre Visível) *</label>
-                            <input type="text" id="senha" required class="input font-bold text-indigo-600">
+                            <input type="text" id="senha" required class="input font-bold text-indigo-600 uppercase">
                         </div>
                         <div class="col-span-2">
                             <label class="label">Informações Adicionais (Obs)</label>
@@ -103,7 +111,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="p-8 border-t bg-slate-50 flex gap-4 flex-none">
+                <div class="p-8 border-t bg-slate-50 flex gap-4 shrink-0">
                     <button type="button" onclick="toggleModal()" class="btn-cancel w-full font-black">DESCARTAR</button>
                     <button type="submit" id="saveManualBtn" class="btn-save w-full font-black">
                         <span id="saveBtnText">SALVAR DADOS</span>
@@ -113,33 +121,29 @@
         </div>
     </div>
 
-    <!-- Modal Prancheta Inteligente (CORRIGIDO PARA O RODAPÉ APARECER) -->
+    <!-- Modal Prancheta de Importação (Botão Fixo) -->
     <div id="importModal" class="modal-overlay hidden">
-        <div class="modal-content max-w-2xl bg-slate-900 border-indigo-500/30 flex flex-col h-[85vh] max-h-[800px]">
-            <div class="modal-header bg-slate-800/50 border-slate-700 flex-none">
+        <div class="modal-content max-w-2xl bg-slate-900 border-indigo-500/30 h-full max-h-[85vh]">
+            <div class="modal-header bg-slate-800/50 border-slate-700 shrink-0">
                 <h2 class="text-xl font-black uppercase text-white tracking-widest flex items-center gap-3">
                     <i data-lucide="terminal" class="text-indigo-400"></i> Prancheta de Massa
                 </h2>
                 <button onclick="toggleImportModal()" class="close-btn text-slate-500 hover:text-white"><i data-lucide="x"></i></button>
             </div>
             
-            <div class="p-8 md:p-10 space-y-6 overflow-y-auto custom-scrollbar flex-1">
-                <button onclick="document.getElementById('jsonFileInput').click()" class="w-full py-4 border-2 border-dashed border-slate-700 rounded-2xl text-slate-400 font-bold hover:border-indigo-500 hover:text-indigo-400 transition-all">
-                    Selecionar arquivo .JSON para restaurar
-                </button>
-                <input type="file" id="jsonFileInput" accept=".json" class="hidden" onchange="importJSON(event)">
-                
-                <div class="space-y-3">
-                    <label class="text-xs font-black text-indigo-400 uppercase tracking-widest">Colar Blocos de Texto Abaixo</label>
-                    <textarea id="bulkImportArea" rows="12" class="w-full p-6 bg-slate-800 text-indigo-100 rounded-[2rem] text-xs font-mono border-2 border-slate-700 focus:border-indigo-500 outline-none transition-all shadow-inner" placeholder="cnpj/cpf: ...&#10;codigo unidade: ...&#10;empresa: ...&#10;usuario: ...&#10;cpf: ...&#10;senha: ...&#10;OBS AQUI"></textarea>
+            <div class="flex flex-col flex-1 overflow-hidden">
+                <div class="p-8 md:p-10 space-y-6 overflow-y-auto custom-scrollbar flex-1">
+                    <div class="space-y-3">
+                        <label class="text-xs font-black text-indigo-400 uppercase tracking-widest">Colar Blocos de Texto Abaixo</label>
+                        <textarea id="bulkImportArea" rows="12" class="w-full p-6 bg-slate-800 text-indigo-100 rounded-[2rem] text-xs font-mono border-2 border-slate-700 focus:border-indigo-500 outline-none transition-all shadow-inner" placeholder="CNPJ: ...&#10;Código Unidade: ...&#10;Empresa: ...&#10;Usuário: ...&#10;CPF: ...&#10;Senha: ..."></textarea>
+                    </div>
                 </div>
-            </div>
 
-            <!-- RODAPÉ FIXO DO MODAL DE IMPORTAÇÃO -->
-            <div class="p-8 border-t border-slate-800 bg-slate-900 flex-none">
-                <button onclick="processBulkImport()" class="btn-import font-black uppercase tracking-widest">
-                    SALVAR TODOS OS ACESSOS COLADOS
-                </button>
+                <div class="p-8 border-t border-slate-800 bg-slate-900 shrink-0">
+                    <button onclick="processBulkImport()" class="btn-import font-black uppercase tracking-widest">
+                        SALVAR TODOS OS ACESSOS COLADOS
+                    </button>
+                </div>
             </div>
         </div>
     </div>
